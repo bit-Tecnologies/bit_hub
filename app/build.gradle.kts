@@ -10,8 +10,8 @@ plugins {
 }
 
 // Версия приложения
-val appVersionName = "0.0.1"
-val appVersionCode = 1
+val appVersionName = "0.0.2.2"
+val appVersionCode = 4
 
 // Чтение ключей из secrets.properties
 val secrets = Properties()
