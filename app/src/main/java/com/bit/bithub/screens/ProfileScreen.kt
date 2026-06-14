@@ -87,8 +87,8 @@ fun ProfileScreen(
                 )
                 
                 ListItem(
-                    headlineContent = { Text("Автообновление") },
-                    supportingContent = { Text("Настройки фоновой проверки и сети") },
+                    headlineContent = { Text("Обновления и сеть") },
+                    supportingContent = { Text("Фоновая проверка и настройки загрузки") },
                     leadingContent = { Icon(Icons.Default.Update, null) },
                     modifier = Modifier.clickable { onAutoUpdateSettingsClick() }
                 )

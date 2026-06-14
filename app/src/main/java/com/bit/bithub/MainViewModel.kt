@@ -15,16 +15,19 @@ import androidx.core.net.toUri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.bit.bithub.data.AppItem
+import com.bit.bithub.data.SettingsRepository
 import com.bit.bithub.util.isNetworkAvailable
 import com.bit.bithub.settings.SettingsManager
 import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.io.File
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val appContainer = application as? BitHubApplication
     private val dm = application.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+    private val settingsRepository = SettingsRepository(application)
 
     var appsFromCloud by mutableStateOf<List<AppItem>>(emptyList())
         private set
@@ -129,26 +132,31 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val name = app.title
         if (url.isEmpty()) return
 
-        try {
-            val request = DownloadManager.Request(url.toUri())
-                .setTitle(name)
-                .setDescription(stateDownloadingText)
-                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "$name.apk")
-                .setAllowedOverMetered(SettingsManager.useMobileData && !SettingsManager.downloadWifiOnly)
-                .setAllowedOverRoaming(SettingsManager.useMobileData && !SettingsManager.downloadWifiOnly)
-                .setAllowedNetworkTypes(
-                    if (SettingsManager.downloadWifiOnly) DownloadManager.Request.NETWORK_WIFI 
-                    else DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE
-                )
+        viewModelScope.launch {
+            try {
+                val wifiOnly = settingsRepository.appDownloadWifiOnly.first()
+                val useMobile = SettingsManager.useMobileData
+                
+                val request = DownloadManager.Request(url.toUri())
+                    .setTitle(name)
+                    .setDescription(stateDownloadingText)
+                    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                    .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "$name.apk")
+                    .setAllowedOverMetered(useMobile && !wifiOnly)
+                    .setAllowedOverRoaming(useMobile && !wifiOnly)
+                    .setAllowedNetworkTypes(
+                        if (wifiOnly) DownloadManager.Request.NETWORK_WIFI 
+                        else DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE
+                    )
 
-            val id = dm.enqueue(request)
-            app.id?.let { appId ->
-                downloadIdToAppId[id] = appId
-                downloadingProgress[appId] = 0.01f
-            }
-            observeDownloads()
-        } catch (_: Exception) { }
+                val id = dm.enqueue(request)
+                app.id?.let { appId ->
+                    downloadIdToAppId[id] = appId
+                    downloadingProgress[appId] = 0.01f
+                }
+                observeDownloads()
+            } catch (_: Exception) { }
+        }
     }
 
     private var observingDownloads = false
