@@ -1,7 +1,6 @@
 package com.bit.bithub
 
 import android.Manifest
-import android.app.DownloadManager
 import android.content.*
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
@@ -53,6 +52,7 @@ import com.bit.bithub.settings.SettingsManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
+import kotlin.time.Duration.Companion.seconds
 
 class MainActivity : ComponentActivity() {
 
@@ -169,7 +169,7 @@ fun BitHubApp(
         val networkCallback = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
                 scope.launch {
-                    delay(2000)
+                    delay(2.seconds)
                     viewModel.loadData()
                     updateViewModel.checkForUpdates()
                 }
@@ -372,7 +372,7 @@ fun BitHubApp(
                             scope.launch { 
                                 settingsRepository.setAppDownloadWifiOnly(it)
                                 // Синхронизируем со старым SettingsManager для работы MainViewModel
-                                com.bit.bithub.settings.SettingsManager.downloadWifiOnly = it
+                                SettingsManager.downloadWifiOnly = it
                             } 
                         },
                         onBack = { showAutoUpdateSettings = false }

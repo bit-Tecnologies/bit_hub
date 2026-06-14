@@ -12,7 +12,7 @@ data class BitItem(
     val description: String,
     val iconUrl: String,
     val iconColor: Color,
-    val isGame: Boolean = false
+    val isGame: Boolean = false,
 )
 
 val allBitsData = listOf(

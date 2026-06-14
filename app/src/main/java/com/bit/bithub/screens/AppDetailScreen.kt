@@ -41,7 +41,7 @@ fun AppDetailScreen(
     downloadProgress: Float,
     onBack: () -> Unit,
     onToggleFavorite: () -> Unit,
-    onInstall: () -> Unit
+    onInstall: () -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -61,13 +61,15 @@ fun AppDetailScreen(
                         )
                     }
                     val context = LocalContext.current
-                    IconButton(onClick = {
-                        val sendIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                            type = "text/plain"
-                            putExtra(android.content.Intent.EXTRA_TEXT, "Скачай ${app.title} в bit Hub! Приложение от ${app.developer}")
+                    IconButton(
+                        onClick = {
+                            val sendIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(android.content.Intent.EXTRA_TEXT, "Скачай ${app.title} в bit Hub! Приложение от ${app.developer}")
+                            }
+                            context.startActivity(android.content.Intent.createChooser(sendIntent, null))
                         }
-                        context.startActivity(android.content.Intent.createChooser(sendIntent, null))
-                    }) {
+                    ) {
                         Icon(Icons.Default.Share, null)
                     }
                 }

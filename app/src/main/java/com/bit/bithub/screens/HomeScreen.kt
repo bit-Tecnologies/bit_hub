@@ -23,7 +23,7 @@ val homeCategories = listOf(
     "\uD83C\uDFAE" to "Игры",
     "\uD83D\uDCF1" to "Связь",
     "\uD83D\uDE80" to "Развлечения",
-    "\uD83D\uDCDD" to "Инструменты"
+    "\uD83D\uDCDD" to "Инструменты",
 )
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -35,8 +35,8 @@ fun HomeScreen(
     onProfileClick: () -> Unit
 ) {
     val featured = apps.take(3)
-    val recommended = apps.filter { !it.isGame }.take(5)
-    val latestGames = apps.filter { it.isGame }.reversed().take(5)
+    val recommended = apps.asSequence().filter { !it.isGame }.take(5).toList()
+    val latestGames = apps.asSequence().filter { it.isGame }.toList().reversed().take(5)
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -63,14 +63,17 @@ fun HomeScreen(
             contentPadding = PaddingValues(bottom = 24.dp)
         ) {
             item {
-                val pagerState = rememberPagerState(pageCount = { featured.size })
+                val pagerState = rememberPagerState { featured.size }
                 HomeCarousel(featured, pagerState, onAppClick)
             }
 
             item {
-                CategoriesSection(homeCategories, onCategoryClick = {
-                    scope.launch { snackbarHostState.showSnackbar("Фильтр по категориям скоро появится...") }
-                })
+                CategoriesSection(
+                    homeCategories, 
+                    onCategoryClick = {
+                        scope.launch { snackbarHostState.showSnackbar("Фильтр по категориям скоро появится...") }
+                    }
+                )
             }
 
             item {

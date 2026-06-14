@@ -23,6 +23,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.io.File
+import kotlin.time.Duration.Companion.milliseconds
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val appContainer = application as? BitHubApplication
@@ -31,7 +32,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     var appsFromCloud by mutableStateOf<List<AppItem>>(emptyList())
         private set
-    var isLoading by mutableStateOf(true)
+    var isLoading by mutableStateOf(value = true)
         private set
     var errorMessage by mutableStateOf<String?>(null)
         private set
@@ -146,7 +147,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     .setAllowedOverRoaming(useMobile && !wifiOnly)
                     .setAllowedNetworkTypes(
                         if (wifiOnly) DownloadManager.Request.NETWORK_WIFI 
-                        else DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE
+                        else DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE,
                     )
 
                 val id = dm.enqueue(request)
@@ -171,7 +172,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val query = DownloadManager.Query().setFilterById(*ids)
                 val cursor = try { dm.query(query) } catch (_: Exception) { null }
                 
-                if (cursor != null && cursor.moveToFirst()) {
+                if ((cursor != null) && cursor.moveToFirst()) {
                     do {
                         val id = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_ID))
                         val status = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
@@ -198,7 +199,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     } while (cursor.moveToNext())
                     cursor.close()
                 }
-                delay(200)
+                delay(200.milliseconds)
             }
             observingDownloads = false
         }

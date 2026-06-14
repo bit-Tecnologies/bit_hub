@@ -21,7 +21,7 @@ class BitHubApplication : Application() {
     private fun initSupabase() {
         supabase = createSupabaseClient(
             supabaseUrl = BuildConfig.SUPABASE_URL,
-            supabaseKey = BuildConfig.SUPABASE_KEY
+            supabaseKey = BuildConfig.SUPABASE_KEY,
         ) {
             install(Postgrest)
         }

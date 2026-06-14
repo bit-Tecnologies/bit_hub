@@ -28,7 +28,7 @@ val appCategories = listOf(
     "\uD83D\uDE80" to "Развлечения",
     "\uD83D\uDCF7" to "Фото",
     "\uD83C\uDFA7" to "Музыка",
-    "\uD83D\uDCB0" to "Финансы"
+    "\uD83D\uDCB0" to "Финансы",
 )
 
 val gameCategories = listOf(
@@ -43,7 +43,6 @@ val gameCategories = listOf(
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun StoreScreen(
-    title: String,
     apps: List<AppItem>,
     onAppClick: (AppItem) -> Unit,
     onInstallClick: (AppItem) -> Unit,
@@ -55,7 +54,8 @@ fun StoreScreen(
     onRefresh: () -> Unit,
     isGamesTab: Boolean = false,
     error: String? = null,
-    onRetry: () -> Unit = {}
+    onRetry: () -> Unit = {},
+    title: String = "",
 ) {
     var searchQuery by remember { mutableStateOf("") }
     val filteredApps = apps.filter { it.title.contains(searchQuery, ignoreCase = true) }
@@ -81,7 +81,7 @@ fun StoreScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            if (error != null && apps.isEmpty()) {
+            if ((error != null) && apps.isEmpty()) {
                 ErrorState(error, onRetry)
             } else {
                 StoreContent(
@@ -112,23 +112,29 @@ private fun StoreSearchBar(
     onProfileClick: () -> Unit
 ) {
     SearchBar(
-        query = query,
-        onQueryChange = onQueryChange,
-        onSearch = {},
-        active = false,
-        onActiveChange = {},
-        placeholder = { Text("Поиск игр и приложений") },
-        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-        trailingIcon = {
-            IconButton(onClick = onProfileClick) {
-                Icon(
-                    Icons.Default.AccountCircle,
-                    contentDescription = "Профиль",
-                    modifier = Modifier.size(36.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
+        inputField = {
+            SearchBarDefaults.InputField(
+                query = query,
+                onQueryChange = onQueryChange,
+                onSearch = {},
+                expanded = false,
+                onExpandedChange = {},
+                placeholder = { Text("Поиск игр и приложений") },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                trailingIcon = {
+                    IconButton(onClick = onProfileClick) {
+                        Icon(
+                            Icons.Default.AccountCircle,
+                            contentDescription = "Профиль",
+                            modifier = Modifier.size(36.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                },
+            )
         },
+        expanded = false,
+        onExpandedChange = {},
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
@@ -227,7 +233,7 @@ private fun ErrorState(error: String, onRetry: () -> Unit) {
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(
-                imageVector = if (error.contains("интернет", true)) Icons.Default.CloudOff else Icons.Default.ErrorOutline,
+                imageVector = if (error.contains("интернет", ignoreCase = true)) Icons.Default.CloudOff else Icons.Default.ErrorOutline,
                 contentDescription = null,
                 modifier = Modifier.size(64.dp),
                 tint = MaterialTheme.colorScheme.error
