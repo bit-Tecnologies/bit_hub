@@ -25,6 +25,8 @@ fun AutoUpdateSettingsScreen(
     onIntervalChange: (UpdateInterval) -> Unit,
     currentNetworkType: NetworkType,
     onNetworkTypeChange: (NetworkType) -> Unit,
+    downloadPreReleases: Boolean,
+    onDownloadPreReleasesChange: (Boolean) -> Unit,
     onBack: () -> Unit
 ) {
     Scaffold(
@@ -102,6 +104,26 @@ fun AutoUpdateSettingsScreen(
                         title = "Только Wi-Fi",
                         selected = currentNetworkType == NetworkType.WIFI_ONLY,
                         onClick = { onNetworkTypeChange(NetworkType.WIFI_ONLY) }
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = "Другое",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 8.dp)
+                    )
+
+                    ListItem(
+                        headlineContent = { Text("Скачивать пре-релизы") },
+                        supportingContent = { Text("Получать доступ к новым функциям раньше других (может быть нестабильно)") },
+                        trailingContent = {
+                            Switch(
+                                checked = downloadPreReleases,
+                                onCheckedChange = onDownloadPreReleasesChange
+                            )
+                        }
                     )
                 }
             }

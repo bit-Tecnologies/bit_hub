@@ -64,7 +64,8 @@ class UpdateWorker(
 
         try {
             val updateRepository = UpdateRepository(applicationContext)
-            val updateInfo = updateRepository.checkUpdate()
+            val includePreReleases = settingsRepository.downloadPreReleases.first()
+            val updateInfo = updateRepository.checkUpdate(includePreReleases)
 
             if (updateInfo != null) {
                 sendUpdateNotification(updateInfo.versionName)

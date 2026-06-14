@@ -348,6 +348,7 @@ fun BitHubApp(
             val backgroundCheck by settingsRepository.backgroundUpdateCheck.collectAsState(initial = true)
             val interval by settingsRepository.updateInterval.collectAsState(initial = UpdateInterval.TWENTY_FOUR_HOURS)
             val networkType by settingsRepository.networkType.collectAsState(initial = NetworkType.WIFI_ONLY)
+            val downloadPreReleases by settingsRepository.downloadPreReleases.collectAsState(initial = false)
 
             ModalBottomSheet(
                 onDismissRequest = { showProfileSheet = false },
@@ -363,6 +364,8 @@ fun BitHubApp(
                         onIntervalChange = { scope.launch { settingsRepository.setUpdateInterval(it) } },
                         currentNetworkType = networkType,
                         onNetworkTypeChange = { scope.launch { settingsRepository.setNetworkType(it) } },
+                        downloadPreReleases = downloadPreReleases,
+                        onDownloadPreReleasesChange = { scope.launch { settingsRepository.setDownloadPreReleases(it) } },
                         onBack = { showAutoUpdateSettings = false }
                     )
                 } else {

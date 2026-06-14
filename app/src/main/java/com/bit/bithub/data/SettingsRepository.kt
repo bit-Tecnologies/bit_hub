@@ -28,6 +28,7 @@ class SettingsRepository(private val context: Context) {
         val BACKGROUND_UPDATE_CHECK = booleanPreferencesKey("background_update_check")
         val UPDATE_INTERVAL = stringPreferencesKey("update_interval")
         val NETWORK_TYPE = stringPreferencesKey("network_type")
+        val DOWNLOAD_PRE_RELEASES = booleanPreferencesKey("download_pre_releases")
     }
 
     val backgroundUpdateCheck: Flow<Boolean> = dataStore.data
@@ -54,6 +55,12 @@ class SettingsRepository(private val context: Context) {
             try { NetworkType.valueOf(name) } catch (e: Exception) { NetworkType.WIFI_ONLY }
         }
 
+    val downloadPreReleases: Flow<Boolean> = dataStore.data
+        .catch { exception ->
+            if (exception is IOException) emit(emptyPreferences()) else throw exception
+        }
+        .map { it[DOWNLOAD_PRE_RELEASES] ?: false }
+
     suspend fun setBackgroundUpdateCheck(enabled: Boolean) {
         dataStore.edit { it[BACKGROUND_UPDATE_CHECK] = enabled }
     }
@@ -64,5 +71,9 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setNetworkType(type: NetworkType) {
         dataStore.edit { it[NETWORK_TYPE] = type.name }
+    }
+
+    suspend fun setDownloadPreReleases(enabled: Boolean) {
+        dataStore.edit { it[DOWNLOAD_PRE_RELEASES] = enabled }
     }
 }

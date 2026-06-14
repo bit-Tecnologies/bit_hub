@@ -32,19 +32,33 @@ class UpdateRepository(private val context: Context) {
         }
     }
 
-    suspend fun checkUpdate(): UpdateInfo? = withContext(Dispatchers.IO) {
+    suspend fun checkUpdate(includePreReleases: Boolean = false): UpdateInfo? = withContext(Dispatchers.IO) {
         try {
-            Log.d(TAG, "[UpdateCheck] Started")
-            val response: HttpResponse = client.get("https://api.github.com/repos/cybernattor/bit_hub/releases/latest")
+            Log.d(TAG, "[UpdateCheck] Started (includePreReleases: $includePreReleases)")
+            
+            val url = if (includePreReleases) {
+                "https://api.github.com/repos/cybernattor/bit_hub/releases"
+            } else {
+                "https://api.github.com/repos/cybernattor/bit_hub/releases/latest"
+            }
+            
+            val response: HttpResponse = client.get(url)
             
             if (!response.status.isSuccess()) {
                 Log.e(TAG, "[UpdateCheck] HTTP Error: ${response.status}")
                 return@withContext null
             }
 
-            val release = response.body<GitHubRelease>()
-            if (release.tagName.isEmpty()) {
-                Log.e(TAG, "[UpdateCheck] Release tag is empty")
+            val release = if (includePreReleases) {
+                val releases = response.body<List<GitHubRelease>>()
+                // Берем самый свежий релиз (первый в списке от GitHub API)
+                releases.firstOrNull()
+            } else {
+                response.body<GitHubRelease>()
+            }
+
+            if (release == null || release.tagName.isEmpty()) {
+                Log.e(TAG, "[UpdateCheck] Release not found or tag is empty")
                 return@withContext null
             }
             

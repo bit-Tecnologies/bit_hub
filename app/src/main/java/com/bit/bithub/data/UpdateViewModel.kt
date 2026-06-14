@@ -65,7 +65,8 @@ class UpdateViewModel(application: Application) : AndroidViewModel(application) 
     fun checkForUpdates(manual: Boolean = false) {
         viewModelScope.launch {
             isChecking = true
-            val info = updateRepository.checkUpdate()
+            val includePreReleases = settingsRepository.downloadPreReleases.first()
+            val info = updateRepository.checkUpdate(includePreReleases)
             if (info != null) {
                 updateInfo = info
             } else if (manual) {
