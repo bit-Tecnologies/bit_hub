@@ -7,6 +7,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.android.Android
 import io.ktor.client.plugins.DefaultRequest
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
 import io.ktor.client.request.header
@@ -26,6 +27,11 @@ class UpdateRepository(private val context: Context) {
                 ignoreUnknownKeys = true
                 coerceInputValues = true
             })
+        }
+        install(HttpTimeout) {
+            requestTimeoutMillis = 15000
+            connectTimeoutMillis = 10000
+            socketTimeoutMillis = 15000
         }
         install(DefaultRequest) {
             header("User-Agent", "bit-Hub-App")
@@ -100,7 +106,8 @@ class UpdateRepository(private val context: Context) {
 
     private fun extractVersionCode(fileName: String): Int? {
         return try {
-            val regex = Regex("""-(\d+)-release\.apk$""")
+            // Формат: bithub-5-v0.0.2.3-release.apk
+            val regex = Regex("""bithub-(\d+)-v.*-release\.apk$""")
             regex.find(fileName)?.groupValues?.get(1)?.toInt()
         } catch (e: Exception) {
             null

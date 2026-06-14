@@ -7,6 +7,7 @@ import android.os.Build
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
+import io.ktor.client.plugins.HttpTimeout
 
 class BitHubApplication : Application() {
     
@@ -24,6 +25,12 @@ class BitHubApplication : Application() {
             supabaseKey = BuildConfig.SUPABASE_KEY,
         ) {
             install(Postgrest)
+            httpConfig {
+                install(HttpTimeout) {
+                    requestTimeoutMillis = 10000
+                    connectTimeoutMillis = 5000
+                }
+            }
         }
     }
 

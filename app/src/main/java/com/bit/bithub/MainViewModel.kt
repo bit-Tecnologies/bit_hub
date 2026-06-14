@@ -5,6 +5,7 @@ import android.app.DownloadManager
 import android.content.Context
 import android.os.Build
 import android.os.Environment
+import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.derivedStateOf
@@ -22,6 +23,8 @@ import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -79,15 +82,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val msg = e.message ?: ""
                 val internetOk = isNetworkAvailable(getApplication())
                 
-                errorMessage = when {
-                    !internetOk -> "Соединение разорвано"
-                    msg.contains("Unable to resolve host", ignoreCase = true) -> 
-                        "Не удается найти сервер bit Hub. Возможно, база данных отключена."
-                    msg.contains("500") || msg.contains("502") || msg.contains("503") -> 
-                        "Сервис Supabase временно недоступен (Ошибка сервера)"
-                    msg.contains("timeout", ignoreCase = true) -> 
-                        "Время ожидания истекло. Медленный ответ от сервера."
-                    else -> "Ошибка сервера: база данных недоступна"
+                if (!internetOk) {
+                    errorMessage = "Соединение разорвано"
+                } else {
+                    errorMessage = when {
+                        msg.contains("Unable to resolve host", ignoreCase = true) -> 
+                            "Не удается найти сервер bit Hub. Возможно, база данных отключена."
+                        msg.contains("500") || msg.contains("502") || msg.contains("503") -> 
+                            "Сервис Supabase временно недоступен (Ошибка сервера)"
+                        msg.contains("timeout", ignoreCase = true) -> 
+                            "Время ожидания истекло. Медленный ответ от сервера."
+                        else -> "Ошибка сервера: база данных недоступна"
+                    }
+                    Log.e("MainViewModel", "Supabase error: $msg")
                 }
             } finally {
                 isLoading = false
@@ -97,29 +104,46 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun refreshInstalledApps() {
-        try {
-            val pm = getApplication<Application>().packageManager
-            val packages = pm.getInstalledPackages(0)
-            installedApps.clear()
-            for (pkg in packages) {
-                val versionNumber = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                    pkg.longVersionCode.toInt()
-                } else {
-                    @Suppress("DEPRECATION")
-                    pkg.versionCode
+        viewModelScope.launch(Dispatchers.Default) {
+            try {
+                val pm = getApplication<Application>().packageManager
+                val packages = pm.getInstalledPackages(0)
+                val newInstalledApps = mutableMapOf<String, Int>()
+                
+                for (pkg in packages) {
+                    val versionNumber = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        pkg.longVersionCode.toInt()
+                    } else {
+                        @Suppress("DEPRECATION")
+                        pkg.versionCode
+                    }
+                    newInstalledApps[pkg.packageName] = versionNumber
                 }
-                installedApps[pkg.packageName] = versionNumber
-            }
-            refreshApkStatus()
-        } catch (_: Exception) { }
+
+                withContext(Dispatchers.Main) {
+                    installedApps.clear()
+                    installedApps.putAll(newInstalledApps)
+                    refreshApkStatus()
+                }
+            } catch (_: Exception) { }
+        }
     }
 
     private fun refreshApkStatus() {
-        appsFromCloud.forEach { app ->
-            val file = getApkFile(app.title)
-            app.id?.let { id ->
-                if (file.exists() && !appsWithApk.contains(id)) appsWithApk.add(id)
-                else if (!file.exists() && appsWithApk.contains(id)) appsWithApk.remove(id)
+        viewModelScope.launch(Dispatchers.Default) {
+            val statusUpdates = mutableListOf<Pair<Int, Boolean>>()
+            appsFromCloud.forEach { app ->
+                val file = getApkFile(app.title)
+                app.id?.let { id ->
+                    statusUpdates.add(id to file.exists())
+                }
+            }
+            
+            withContext(Dispatchers.Main) {
+                statusUpdates.forEach { (id, exists) ->
+                    if (exists && !appsWithApk.contains(id)) appsWithApk.add(id)
+                    else if (!exists && appsWithApk.contains(id)) appsWithApk.remove(id)
+                }
             }
         }
     }
