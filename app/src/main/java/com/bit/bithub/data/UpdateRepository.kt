@@ -20,7 +20,7 @@ import kotlinx.serialization.json.Json
 import java.io.File
 
 class UpdateRepository(private val context: Context) {
-    private val TAG = "bit_hub_updater"
+    private val tag = "bit_hub_updater"
     private val client = HttpClient(Android) {
         install(ContentNegotiation) {
             json(Json {
@@ -40,7 +40,7 @@ class UpdateRepository(private val context: Context) {
 
     suspend fun checkUpdate(includePreReleases: Boolean = false): UpdateInfo? = withContext(Dispatchers.IO) {
         try {
-            Log.d(TAG, "[UpdateCheck] Started (includePreReleases: $includePreReleases)")
+            Log.d(tag, "[UpdateCheck] Started (includePreReleases: $includePreReleases)")
             
             val url = if (includePreReleases) {
                 "https://api.github.com/repos/cybernattor/bit_hub/releases"
@@ -51,7 +51,7 @@ class UpdateRepository(private val context: Context) {
             val response: HttpResponse = client.get(url)
             
             if (!response.status.isSuccess()) {
-                Log.e(TAG, "[UpdateCheck] HTTP Error: ${response.status}")
+                Log.e(tag, "[UpdateCheck] HTTP Error: ${response.status}")
                 return@withContext null
             }
 
@@ -64,7 +64,7 @@ class UpdateRepository(private val context: Context) {
             }
 
             if (release == null || release.tagName.isEmpty()) {
-                Log.e(TAG, "[UpdateCheck] Release not found or tag is empty")
+                Log.e(tag, "[UpdateCheck] Release not found or tag is empty")
                 return@withContext null
             }
             
@@ -72,29 +72,29 @@ class UpdateRepository(private val context: Context) {
             val apkAsset = release.assets.find { it.name.endsWith(".apk") }
 
             if (apkAsset == null) {
-                Log.e(TAG, "[UpdateCheck] No APK asset found")
+                Log.e(tag, "[UpdateCheck] No APK asset found")
                 return@withContext null
             }
 
             val remoteVersionName = parseTagName(release.tagName)
             val remoteVersionCode = extractVersionCode(apkAsset.name)
 
-            Log.d(TAG, "[UpdateCheck] Remote: $remoteVersionName (code: $remoteVersionCode), Local: ${BuildConfig.VERSION_NAME} (code: ${BuildConfig.VERSION_CODE})")
+            Log.d(tag, "[UpdateCheck] Remote: $remoteVersionName (code: $remoteVersionCode), Local: ${BuildConfig.VERSION_NAME} (code: ${BuildConfig.VERSION_CODE})")
 
             if (isVersionHigher(remoteVersionCode, remoteVersionName)) {
-                Log.d(TAG, "[UpdateCheck] New version found!")
+                Log.d(tag, "[UpdateCheck] New version found!")
                 return@withContext UpdateInfo(
                     versionName = remoteVersionName,
                     versionCode = remoteVersionCode,
                     changelog = release.body,
                     downloadUrl = apkAsset.downloadUrl,
-                    fileName = apkAsset.name
+                    fileName = apkAsset.name,
                 )
             } else {
-                Log.d(TAG, "[UpdateCheck] App is up to date")
+                Log.d(tag, "[UpdateCheck] App is up to date")
             }
         } catch (e: Exception) {
-            Log.e(TAG, "[UpdateCheck] Exception: ${e.message}")
+            Log.e(tag, "[UpdateCheck] Exception: ${e.message}")
             e.printStackTrace()
         }
         null
@@ -109,7 +109,7 @@ class UpdateRepository(private val context: Context) {
             // Формат: bithub-5-v0.0.2.3-release.apk
             val regex = Regex("""bithub-(\d+)-v.*-release\.apk$""")
             regex.find(fileName)?.groupValues?.get(1)?.toInt()
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }

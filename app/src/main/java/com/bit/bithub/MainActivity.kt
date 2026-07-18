@@ -37,7 +37,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bit.bithub.components.UpdateBottomSheet
-import com.bit.bithub.data.AppItem
+import com.bit.bithub.data.App
 import com.bit.bithub.data.NetworkType
 import com.bit.bithub.data.SettingsRepository
 import com.bit.bithub.data.UpdateInterval
@@ -98,17 +98,17 @@ fun BitHubApp(
     val scope = rememberCoroutineScope()
     val lifecycleOwner = LocalLifecycleOwner.current
     val settingsRepository = remember { SettingsRepository(context) }
-    
+
     val stateDownloading = stringResource(R.string.state_downloading)
-    
+
     var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.HOME) }
-    var selectedAppId by rememberSaveable { mutableStateOf<Int?>(null) }
+    var selectedAppId by rememberSaveable { mutableStateOf<Long?>(null) }
     var showProfileSheet by rememberSaveable { mutableStateOf(false) }
-    var appToConfirmDownload by remember { mutableStateOf<AppItem?>(null) }
-    
+    var appToConfirmDownload by remember { mutableStateOf<App?>(null) }
+
     val profileSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    
-    var pendingDownload by remember { mutableStateOf<Pair<AppItem, String>?>(null) }
+
+    var pendingDownload by remember { mutableStateOf<Pair<App, String>?>(null) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -175,7 +175,7 @@ fun BitHubApp(
                 }
             }
         }
-        
+
         try {
             val request = NetworkRequest.Builder()
                 .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
@@ -184,7 +184,7 @@ fun BitHubApp(
         } catch (_: Exception) {}
     }
 
-    fun startDownload(app: AppItem) {
+    fun startDownload(app: App) {
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P &&
             ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
         ) {
@@ -195,17 +195,18 @@ fun BitHubApp(
         viewModel.download(app, stateDownloading)
     }
 
-    fun handleInstallClick(app: AppItem) {
+    fun handleInstallClick(app: App) {
         vibrate()
         val appId = app.id ?: return
-        
+
         if (viewModel.downloadingProgress.containsKey(appId)) {
             viewModel.cancelDownload(appId)
             return
         }
 
         val apkFile = viewModel.getApkFile(app.title)
-        if (apkFile.exists() && !viewModel.installedApps.containsKey(app.packageName)) {
+        val pkg = app.packageName
+        if (apkFile.exists() && pkg != null && !viewModel.installedApps.containsKey(pkg)) {
             UpdateInstaller.installApk(context, apkFile)
             return
         }
@@ -260,7 +261,7 @@ fun BitHubApp(
                         icon = { Icon(dest.icon, stringResource(dest.labelRes), modifier = Modifier.size(24.dp)) },
                         label = { Text(text = stringResource(dest.labelRes), maxLines = 1, overflow = TextOverflow.Ellipsis, fontSize = 11.sp) },
                         selected = dest == currentDestination && selectedAppId == null,
-                        onClick = { 
+                        onClick = {
                             if (currentDestination != dest || selectedAppId != null) {
                                 vibrate()
                                 currentDestination = dest
@@ -278,9 +279,10 @@ fun BitHubApp(
             } else {
                 val app = viewModel.appsFromCloud.find { it.id == selectedAppId }
                 if (app != null) {
-                    val isInstalled = viewModel.installedApps.containsKey(app.packageName)
-                    val currentVersion = viewModel.installedApps[app.packageName] ?: 0
-                    val isUpdate = isInstalled && app.versionNumber > currentVersion
+                    val pkg = app.packageName
+                    val isInstalled = pkg?.let { viewModel.installedApps.containsKey(it) } ?: false
+                    val currentVersion = pkg?.let { viewModel.installedApps[it] } ?: 0
+                    val isUpdate = isInstalled && app.versionCode > currentVersion
                     val progress = viewModel.downloadingProgress[app.id]
 
                     AppDetailScreen(
@@ -291,9 +293,9 @@ fun BitHubApp(
                         hasApk = viewModel.appsWithApk.contains(app.id),
                         isDownloading = progress != null,
                         downloadProgress = progress ?: 0f,
-                        onBack = { 
+                        onBack = {
                             vibrate()
-                            selectedAppId = null 
+                            selectedAppId = null
                         },
                         onToggleFavorite = {},
                         onInstall = { handleInstallClick(app) }
@@ -317,8 +319,8 @@ fun BitHubApp(
                     StoreScreen(
                         title = stringResource(currentDestination.labelRes),
                         apps = when (currentDestination) {
-                            AppDestinations.GAMES -> viewModel.appsFromCloud.filter { it.isGame }
-                            AppDestinations.APPS -> viewModel.appsFromCloud.filter { !it.isGame }
+                            AppDestinations.GAMES -> viewModel.appsFromCloud.filter { it.category == "Игры" }
+                            AppDestinations.APPS -> viewModel.appsFromCloud.filter { it.category != "Игры" }
                             else -> viewModel.appsFromCloud
                         },
                         isGamesTab = currentDestination == AppDestinations.GAMES,
@@ -342,7 +344,7 @@ fun BitHubApp(
                 }
             }
         }
-        
+
         if (showProfileSheet) {
             var showAutoUpdateSettings by remember { mutableStateOf(false) }
             val backgroundCheck by settingsRepository.backgroundUpdateCheck.collectAsState(initial = true)
@@ -368,12 +370,11 @@ fun BitHubApp(
                         downloadPreReleases = downloadPreReleases,
                         onDownloadPreReleasesChange = { scope.launch { settingsRepository.setDownloadPreReleases(it) } },
                         appDownloadWifiOnly = appDownloadWifiOnly,
-                        onAppDownloadWifiOnlyChange = { 
-                            scope.launch { 
+                        onAppDownloadWifiOnlyChange = {
+                            scope.launch {
                                 settingsRepository.setAppDownloadWifiOnly(it)
-                                // Синхронизируем со старым SettingsManager для работы MainViewModel
                                 SettingsManager.downloadWifiOnly = it
-                            } 
+                            }
                         },
                         onBack = { showAutoUpdateSettings = false }
                     )
@@ -384,10 +385,10 @@ fun BitHubApp(
                         onAutoUpdateSettingsClick = { showAutoUpdateSettings = true },
                         installedCount = viewModel.installedApps.size,
                         isCheckingUpdate = updateViewModel.isChecking,
-                        onCheckUpdateClick = { 
+                        onCheckUpdateClick = {
                             updateViewModel.checkForUpdates(manual = true)
                         },
-                        onClose = { 
+                        onClose = {
                             scope.launch { profileSheetState.hide() }.invokeOnCompletion {
                                 if (!profileSheetState.isVisible) {
                                     showProfileSheet = false
@@ -400,11 +401,10 @@ fun BitHubApp(
         }
 
         SnackbarHost(
-            hostState = snackbarHostState, 
+            hostState = snackbarHostState,
             modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 80.dp)
         )
 
-        // Update BottomSheet
         updateViewModel.updateInfo?.let { update ->
             UpdateBottomSheet(
                 updateInfo = update,

@@ -7,6 +7,7 @@ import android.os.Build
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
+import io.github.jan.supabase.annotations.SupabaseInternal
 import io.ktor.client.plugins.HttpTimeout
 
 class BitHubApplication : Application() {
@@ -19,6 +20,7 @@ class BitHubApplication : Application() {
         createNotificationChannels()
     }
 
+    @OptIn(SupabaseInternal::class)
     private fun initSupabase() {
         supabase = createSupabaseClient(
             supabaseUrl = BuildConfig.SUPABASE_URL,

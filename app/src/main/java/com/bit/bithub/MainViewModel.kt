@@ -15,11 +15,12 @@ import androidx.compose.runtime.setValue
 import androidx.core.net.toUri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.bit.bithub.data.AppItem
+import com.bit.bithub.data.App
 import com.bit.bithub.data.SettingsRepository
 import com.bit.bithub.util.isNetworkAvailable
 import com.bit.bithub.settings.SettingsManager
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -33,7 +34,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val dm = application.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
     private val settingsRepository = SettingsRepository(application)
 
-    var appsFromCloud by mutableStateOf<List<AppItem>>(emptyList())
+    var appsFromCloud by mutableStateOf<List<App>>(emptyList())
         private set
     var isLoading by mutableStateOf(value = true)
         private set
@@ -41,14 +42,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         private set
 
     val installedApps = mutableStateMapOf<String, Int>()
-    val appsWithApk = mutableStateListOf<Int>()
-    val downloadingProgress = mutableStateMapOf<Int, Float>()
-    val downloadIdToAppId = mutableStateMapOf<Long, Int>()
+    val appsWithApk = mutableStateListOf<Long>()
+    val downloadingProgress = mutableStateMapOf<Long, Float>()
+    val downloadIdToAppId = mutableStateMapOf<Long, Long>()
 
-    val appsWithUpdates: List<AppItem> by derivedStateOf {
+    val appsWithUpdates: List<App> by derivedStateOf {
         appsFromCloud.filter { app ->
-            val installedVersion = installedApps[app.packageName] ?: return@filter false
-            app.versionNumber > installedVersion
+            val pkg = app.packageName ?: return@filter false
+            val installedVersion = installedApps[pkg] ?: return@filter false
+            app.versionCode > installedVersion
         }
     }
 
@@ -60,7 +62,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             isLoading = true
             errorMessage = null
-            
+
             if (!isNetworkAvailable(getApplication())) {
                 errorMessage = "Нет интернет-соединения"
                 isLoading = false
@@ -70,7 +72,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val supabase = appContainer?.supabase
                 if (supabase != null) {
-                    val results = supabase.from("apps").select().decodeList<AppItem>()
+                    val results = supabase.from("apps").select(
+                        columns = Columns.list("*", "app_releases(*)")
+                    ).decodeList<App>()
                     appsFromCloud = results
                     if (results.isEmpty()) {
                         errorMessage = "Приложения не найдены"
@@ -81,16 +85,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             } catch (e: Exception) {
                 val msg = e.message ?: ""
                 val internetOk = isNetworkAvailable(getApplication())
-                
+
                 if (!internetOk) {
                     errorMessage = "Соединение разорвано"
                 } else {
                     errorMessage = when {
-                        msg.contains("Unable to resolve host", ignoreCase = true) -> 
+                        msg.contains("Unable to resolve host", ignoreCase = true) ->
                             "Не удается найти сервер bit Hub. Возможно, база данных отключена."
-                        msg.contains("500") || msg.contains("502") || msg.contains("503") -> 
+                        msg.contains("500") || msg.contains("502") || msg.contains("503") ->
                             "Сервис Supabase временно недоступен (Ошибка сервера)"
-                        msg.contains("timeout", ignoreCase = true) -> 
+                        msg.contains("timeout", ignoreCase = true) ->
                             "Время ожидания истекло. Медленный ответ от сервера."
                         else -> "Ошибка сервера: база данных недоступна"
                     }
@@ -109,7 +113,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val pm = getApplication<Application>().packageManager
                 val packages = pm.getInstalledPackages(0)
                 val newInstalledApps = mutableMapOf<String, Int>()
-                
+
                 for (pkg in packages) {
                     val versionNumber = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                         pkg.longVersionCode.toInt()
@@ -131,14 +135,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun refreshApkStatus() {
         viewModelScope.launch(Dispatchers.Default) {
-            val statusUpdates = mutableListOf<Pair<Int, Boolean>>()
+            val statusUpdates = mutableListOf<Pair<Long, Boolean>>()
             appsFromCloud.forEach { app ->
                 val file = getApkFile(app.title)
                 app.id?.let { id ->
                     statusUpdates.add(id to file.exists())
                 }
             }
-            
+
             withContext(Dispatchers.Main) {
                 statusUpdates.forEach { (id, exists) ->
                     if (exists && !appsWithApk.contains(id)) appsWithApk.add(id)
@@ -152,7 +156,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         return File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "$name.apk")
     }
 
-    fun download(app: AppItem, stateDownloadingText: String) {
+    fun download(app: App, stateDownloadingText: String) {
         val url = app.downloadUrl ?: ""
         val name = app.title
         if (url.isEmpty()) return
@@ -161,7 +165,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val wifiOnly = settingsRepository.appDownloadWifiOnly.first()
                 val useMobile = SettingsManager.useMobileData
-                
+
                 val request = DownloadManager.Request(url.toUri())
                     .setTitle(name)
                     .setDescription(stateDownloadingText)
@@ -170,7 +174,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     .setAllowedOverMetered(useMobile && !wifiOnly)
                     .setAllowedOverRoaming(useMobile && !wifiOnly)
                     .setAllowedNetworkTypes(
-                        if (wifiOnly) DownloadManager.Request.NETWORK_WIFI 
+                        if (wifiOnly) DownloadManager.Request.NETWORK_WIFI
                         else DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE,
                     )
 
@@ -192,16 +196,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             while (downloadIdToAppId.isNotEmpty()) {
                 val ids = downloadIdToAppId.keys.toLongArray()
                 if (ids.isEmpty()) break
-                
+
                 val query = DownloadManager.Query().setFilterById(*ids)
                 val cursor = try { dm.query(query) } catch (_: Exception) { null }
-                
+
                 if ((cursor != null) && cursor.moveToFirst()) {
                     do {
                         val id = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_ID))
                         val status = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
                         val appId = downloadIdToAppId[id] ?: continue
-                        
+
                         when (status) {
                             DownloadManager.STATUS_SUCCESSFUL -> {
                                 downloadingProgress.remove(appId)
@@ -229,7 +233,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun cancelDownload(appId: Int) {
+    fun cancelDownload(appId: Long) {
         val downloadId = downloadIdToAppId.entries.find { it.value == appId }?.key
         if (downloadId != null) {
             dm.remove(downloadId)

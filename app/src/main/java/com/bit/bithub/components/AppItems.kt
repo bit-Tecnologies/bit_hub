@@ -22,8 +22,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.bit.bithub.R
-import com.bit.bithub.data.AppItem
-import com.bit.bithub.util.toColor
+import com.bit.bithub.data.App
+
+private val defaultIconColor = Color(0xFF2C6CFF)
 
 @Composable
 fun NewsCard(title: String, description: String, imageUrl: String, onClick: () -> Unit) {
@@ -129,7 +130,7 @@ fun CategoryTile(name: String, icon: String, color: Color, onClick: () -> Unit) 
 }
 
 @Composable
-fun FeaturedAppCard(app: AppItem, onClick: () -> Unit) {
+fun FeaturedAppCard(app: App, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .width(160.dp)
@@ -144,7 +145,7 @@ fun FeaturedAppCard(app: AppItem, onClick: () -> Unit) {
                 modifier = Modifier
                     .size(160.dp)
                     .clip(RoundedCornerShape(28.dp))
-                    .background(app.iconColorHex.toColor()),
+                    .background(defaultIconColor),
                 contentScale = ContentScale.Crop
             )
             Spacer(Modifier.height(8.dp))
@@ -166,7 +167,7 @@ fun FeaturedAppCard(app: AppItem, onClick: () -> Unit) {
 }
 
 @Composable
-fun WideAppCard(app: AppItem, onClick: () -> Unit) {
+fun WideAppCard(app: App, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .width(260.dp)
@@ -194,7 +195,7 @@ fun WideAppCard(app: AppItem, onClick: () -> Unit) {
                     modifier = Modifier
                         .size(40.dp)
                         .clip(RoundedCornerShape(8.dp))
-                        .background(app.iconColorHex.toColor())
+                        .background(defaultIconColor)
                 )
                 Spacer(Modifier.width(12.dp))
                 Column {
@@ -219,12 +220,12 @@ fun WideAppCard(app: AppItem, onClick: () -> Unit) {
 
 @Composable
 fun AppListItem(
-    app: AppItem, 
-    isInstalled: Boolean, 
-    needsUpdate: Boolean, 
+    app: App,
+    isInstalled: Boolean,
+    needsUpdate: Boolean,
     hasApk: Boolean,
     downloadProgress: Float?,
-    onInstallClick: () -> Unit, 
+    onInstallClick: () -> Unit,
     onClick: () -> Unit
 ) {
     ListItem(
@@ -233,20 +234,20 @@ fun AppListItem(
             indication = ripple(),
             onClick = onClick
         ),
-        headlineContent = { 
+        headlineContent = {
             Text(
                 text = app.title,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 fontWeight = FontWeight.SemiBold
-            ) 
+            )
         },
-        supportingContent = { 
+        supportingContent = {
             Text(
                 text = "${app.developer} • ${app.rating} ★",
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
-            ) 
+            )
         },
         leadingContent = {
             AsyncImage(
@@ -255,7 +256,7 @@ fun AppListItem(
                 modifier = Modifier
                     .size(56.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(app.iconColorHex.toColor()),
+                    .background(defaultIconColor),
                 contentScale = ContentScale.Crop
             )
         },
@@ -266,7 +267,7 @@ fun AppListItem(
                 hasApk -> stringResource(R.string.btn_install)
                 else -> stringResource(R.string.btn_download)
             }
-            
+
             Box(modifier = Modifier.padding(start = 8.dp)) {
                 DownloadButton(
                     text = buttonText,

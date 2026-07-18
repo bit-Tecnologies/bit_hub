@@ -19,7 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.bit.bithub.components.*
-import com.bit.bithub.data.AppItem
+import com.bit.bithub.data.App
 import kotlinx.coroutines.launch
 
 val appCategories = listOf(
@@ -43,12 +43,12 @@ val gameCategories = listOf(
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun StoreScreen(
-    apps: List<AppItem>,
-    onAppClick: (AppItem) -> Unit,
-    onInstallClick: (AppItem) -> Unit,
+    apps: List<App>,
+    onAppClick: (App) -> Unit,
+    onInstallClick: (App) -> Unit,
     installedApps: Map<String, Int>,
-    appsWithApk: Set<Int>,
-    downloadingIds: Map<Int, Float>,
+    appsWithApk: Set<Long>,
+    downloadingIds: Map<Long, Float>,
     onProfileClick: () -> Unit,
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
@@ -145,14 +145,14 @@ private fun StoreSearchBar(
 @Composable
 private fun StoreContent(
     searchQuery: String,
-    featuredApps: List<AppItem>,
-    recommended: List<AppItem>,
-    filteredApps: List<AppItem>,
+    featuredApps: List<App>,
+    recommended: List<App>,
+    filteredApps: List<App>,
     installedApps: Map<String, Int>,
-    appsWithApk: Set<Int>,
-    downloadingIds: Map<Int, Float>,
-    onAppClick: (AppItem) -> Unit,
-    onInstallClick: (AppItem) -> Unit,
+    appsWithApk: Set<Long>,
+    downloadingIds: Map<Long, Float>,
+    onAppClick: (App) -> Unit,
+    onInstallClick: (App) -> Unit,
     isGamesTab: Boolean,
     onCategoryClick: (String) -> Unit
 ) {
@@ -172,20 +172,20 @@ private fun StoreContent(
 
             item {
                 WideAppSection(
-                    if (isGamesTab) "Популярно сейчас" else "Рекомендуем вам", 
-                    recommended, 
+                    if (isGamesTab) "Популярно сейчас" else "Рекомендуем вам",
+                    recommended,
                     onAppClick
                 )
             }
 
             item {
                 AppSection(
-                    if (isGamesTab) "Топ бесплатных игр" else "Топ приложений", 
-                    featuredApps.reversed(), 
+                    if (isGamesTab) "Топ бесплатных игр" else "Топ приложений",
+                    featuredApps.reversed(),
                     onAppClick
                 )
             }
-            
+
             item { Spacer(Modifier.height(24.dp)) }
         } else {
             item {
@@ -208,9 +208,10 @@ private fun StoreContent(
             }
 
             items(filteredApps) { app ->
-                val installedVersion = app.packageName?.let { installedApps[it] }
-                val needsUpdate = installedVersion != null && app.versionNumber > installedVersion
-                
+                val pkg = app.packageName
+                val installedVersion = pkg?.let { installedApps[it] }
+                val needsUpdate = installedVersion != null && app.versionCode > installedVersion
+
                 AppListItem(
                     app = app,
                     isInstalled = installedVersion != null,

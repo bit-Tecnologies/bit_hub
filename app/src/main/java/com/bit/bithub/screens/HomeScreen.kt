@@ -16,7 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.bit.bithub.components.*
-import com.bit.bithub.data.AppItem
+import com.bit.bithub.data.App
 import kotlinx.coroutines.launch
 
 val homeCategories = listOf(
@@ -29,14 +29,14 @@ val homeCategories = listOf(
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun HomeScreen(
-    apps: List<AppItem>,
-    onAppClick: (AppItem) -> Unit,
+    apps: List<App>,
+    onAppClick: (App) -> Unit,
     onSearchClick: () -> Unit,
     onProfileClick: () -> Unit
 ) {
     val featured = apps.take(3)
-    val recommended = apps.asSequence().filter { !it.isGame }.take(5).toList()
-    val latestGames = apps.asSequence().filter { it.isGame }.toList().reversed().take(5)
+    val recommended = apps.asSequence().filter { it.category != "Игры" }.take(5).toList()
+    val latestGames = apps.asSequence().filter { it.category == "Игры" }.toList().reversed().take(5)
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -69,7 +69,7 @@ fun HomeScreen(
 
             item {
                 CategoriesSection(
-                    homeCategories, 
+                    homeCategories,
                     onCategoryClick = {
                         scope.launch { snackbarHostState.showSnackbar("Фильтр по категориям скоро появится...") }
                     }

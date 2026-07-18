@@ -12,14 +12,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.bit.bithub.data.AppItem
+import com.bit.bithub.data.App
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HomeCarousel(
-    featuredApps: List<AppItem>,
+    featuredApps: List<App>,
     pagerState: PagerState,
-    onAppClick: (AppItem) -> Unit
+    onAppClick: (App) -> Unit
 ) {
     HorizontalPager(
         state = pagerState,
@@ -67,11 +67,11 @@ fun CategoriesSection(
 @Composable
 fun WideAppSection(
     title: String,
-    apps: List<AppItem>,
-    onAppClick: (AppItem) -> Unit
+    apps: List<App>,
+    onAppClick: (App) -> Unit
 ) {
     if (apps.isEmpty()) return
-    
+
     Column {
         Text(
             title,
@@ -93,11 +93,11 @@ fun WideAppSection(
 @Composable
 fun AppSection(
     title: String,
-    apps: List<AppItem>,
-    onAppClick: (AppItem) -> Unit
+    apps: List<App>,
+    onAppClick: (App) -> Unit
 ) {
     if (apps.isEmpty()) return
-    
+
     Column {
         Text(
             title,

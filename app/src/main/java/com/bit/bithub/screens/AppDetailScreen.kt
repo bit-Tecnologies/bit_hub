@@ -23,16 +23,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.bit.bithub.data.AppItem
+import com.bit.bithub.data.App
 import com.bit.bithub.components.AppStatItem
 import com.bit.bithub.components.DownloadButton
-import com.bit.bithub.util.toColor
 import com.bit.bithub.R
+
+private val defaultIconColor = Color(0xFF2C6CFF)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppDetailScreen(
-    app: AppItem,
+    app: App,
     isFavorite: Boolean,
     isInstalled: Boolean,
     needsUpdate: Boolean,
@@ -94,7 +95,7 @@ fun AppDetailScreen(
                     modifier = Modifier
                         .size(88.dp)
                         .clip(RoundedCornerShape(16.dp))
-                        .background(app.iconColorHex.toColor()),
+                        .background(defaultIconColor),
                     contentScale = ContentScale.Crop
                 )
                 Spacer(Modifier.width(16.dp))
@@ -113,11 +114,11 @@ fun AppDetailScreen(
                     modifier = Modifier.padding(16.dp).fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    AppStatItem("${app.rating} ★", "отзывов")
+                    AppStatItem("${app.rating} ★", "Рейтинг")
                     VerticalDivider(Modifier.height(40.dp))
-                    AppStatItem(app.size, "Размер")
+                    AppStatItem(app.formattedSize, "Размер")
                     VerticalDivider(Modifier.height(40.dp))
-                    AppStatItem(app.versionCode, "Версия")
+                    AppStatItem(app.versionName, "Версия")
                 }
             }
 
@@ -142,27 +143,30 @@ fun AppDetailScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            Text(
-                "Скриншоты",
-                modifier = Modifier.padding(horizontal = 16.dp),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
-            LazyRow(
-                contentPadding = PaddingValues(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(5) { index ->
-                    AsyncImage(
-                        model = "https://picsum.photos/seed/${(app.id ?: 0) + index}/300/500",
-                        contentDescription = null,
-                        modifier = Modifier
-                            .width(150.dp)
-                            .height(250.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(app.iconColorHex.toColor().copy(alpha = 0.3f)),
-                        contentScale = ContentScale.Crop
-                    )
+            val screenshots = app.screenshots
+            if (!screenshots.isNullOrEmpty()) {
+                Text(
+                    "Скриншоты",
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                LazyRow(
+                    contentPadding = PaddingValues(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(screenshots.size) { index ->
+                        AsyncImage(
+                            model = screenshots[index],
+                            contentDescription = null,
+                            modifier = Modifier
+                                .width(150.dp)
+                                .height(250.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(defaultIconColor.copy(alpha = 0.3f)),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
                 }
             }
 
