@@ -23,10 +23,12 @@ class UpdateRepository(private val context: Context) {
     private val tag = "bit_hub_updater"
     private val client = HttpClient(Android) {
         install(ContentNegotiation) {
-            json(Json {
-                ignoreUnknownKeys = true
-                coerceInputValues = true
-            })
+            json(
+                Json {
+                    ignoreUnknownKeys = true
+                    coerceInputValues = true
+                },
+            )
         }
         install(HttpTimeout) {
             requestTimeoutMillis = 15000

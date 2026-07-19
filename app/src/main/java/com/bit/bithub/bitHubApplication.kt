@@ -43,13 +43,13 @@ class BitHubApplication : Application() {
             val installChannel = NotificationChannel(
                 INSTALL_CHANNEL_ID,
                 "Установка приложений",
-                NotificationManager.IMPORTANCE_DEFAULT
+                NotificationManager.IMPORTANCE_DEFAULT,
             )
             
             val updatesChannel = NotificationChannel(
                 com.bit.bithub.worker.UpdateWorker.UPDATES_CHANNEL_ID,
                 "Обновления bit Hub",
-                NotificationManager.IMPORTANCE_DEFAULT
+                NotificationManager.IMPORTANCE_DEFAULT,
             ).apply {
                 description = "Уведомления о доступных обновлениях bit Hub"
             }

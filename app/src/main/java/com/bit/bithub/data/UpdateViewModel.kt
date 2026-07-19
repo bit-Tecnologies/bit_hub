@@ -12,6 +12,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.bit.bithub.util.UpdateInstaller
 import com.bit.bithub.worker.UpdateWorker
+import androidx.core.net.toUri
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.io.File
@@ -23,10 +24,10 @@ class UpdateViewModel(application: Application) : AndroidViewModel(application) 
     var updateInfo by mutableStateOf<UpdateInfo?>(null)
         private set
     
-    var isChecking by mutableStateOf(false)
+    var isChecking by mutableStateOf(value = false)
         private set
 
-    var showNoUpdateMessage by mutableStateOf(false)
+    var showNoUpdateMessage by mutableStateOf(value = false)
         private set
 
     init {
@@ -96,7 +97,7 @@ class UpdateViewModel(application: Application) : AndroidViewModel(application) 
         updateRepository.clearOldUpdates()
 
         val destinationFile = File(context.externalCacheDir, info.fileName)
-        val request = DownloadManager.Request(Uri.parse(info.downloadUrl))
+        val request = DownloadManager.Request(info.downloadUrl.toUri())
             .setTitle("bit Hub Update ${info.versionName}")
             .setDescription("Загрузка обновления...")
             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)

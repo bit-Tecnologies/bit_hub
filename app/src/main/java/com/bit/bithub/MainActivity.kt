@@ -7,7 +7,6 @@ import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
-import android.net.Uri
 import android.os.*
 import android.provider.Settings
 import androidx.activity.ComponentActivity
@@ -73,7 +72,7 @@ class MainActivity : ComponentActivity() {
                 }
                 enableEdgeToEdge(
                     statusBarStyle = style,
-                    navigationBarStyle = style
+                    navigationBarStyle = style,
                 )
             }
 
@@ -101,10 +100,10 @@ fun BitHubApp(
 
     val stateDownloading = stringResource(R.string.state_downloading)
 
-    var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.HOME) }
-    var selectedAppId by rememberSaveable { mutableStateOf<Long?>(null) }
-    var showProfileSheet by rememberSaveable { mutableStateOf(false) }
-    var appToConfirmDownload by remember { mutableStateOf<App?>(null) }
+    var currentDestination by rememberSaveable { mutableStateOf(value = AppDestinations.HOME) }
+    var selectedAppId by rememberSaveable { mutableStateOf<Long?>(value = null) }
+    var showProfileSheet by rememberSaveable { mutableStateOf(value = false) }
+    var appToConfirmDownload by remember { mutableStateOf<App?>(value = null) }
 
     val profileSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -185,8 +184,8 @@ fun BitHubApp(
     }
 
     fun startDownload(app: App) {
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P &&
-            ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
+        if ((Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) &&
+            (ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
         ) {
             pendingDownload = Pair(app, app.downloadUrl ?: "")
             permissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -298,7 +297,7 @@ fun BitHubApp(
                             selectedAppId = null
                         },
                         onToggleFavorite = {},
-                        onInstall = { handleInstallClick(app) }
+                        onInstall = { handleInstallClick(app) },
                     )
                 } else if (currentDestination == AppDestinations.HOME) {
                     HomeScreen(
@@ -317,7 +316,6 @@ fun BitHubApp(
                     )
                 } else {
                     StoreScreen(
-                        title = stringResource(currentDestination.labelRes),
                         apps = when (currentDestination) {
                             AppDestinations.GAMES -> viewModel.appsFromCloud.filter { it.category == "Игры" }
                             AppDestinations.APPS -> viewModel.appsFromCloud.filter { it.category != "Игры" }

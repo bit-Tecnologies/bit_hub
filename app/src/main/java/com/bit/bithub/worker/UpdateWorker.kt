@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit
 
 class UpdateWorker(
     context: Context,
-    workerParams: WorkerParameters
+    workerParams: WorkerParameters,
 ) : CoroutineWorker(context, workerParams) {
 
     companion object {
@@ -31,7 +31,7 @@ class UpdateWorker(
                     if (networkType == com.bit.bithub.data.NetworkType.WIFI_ONLY) NetworkType.UNMETERED 
                     else NetworkType.CONNECTED
                 )
-                .setRequiresBatteryNotLow(true)
+                .setRequiresBatteryNotLow(requiresBatteryNotLow = true)
                 .build()
 
             val request = PeriodicWorkRequestBuilder<UpdateWorker>(
@@ -67,8 +67,8 @@ class UpdateWorker(
             val includePreReleases = settingsRepository.downloadPreReleases.first()
             val updateInfo = updateRepository.checkUpdate(includePreReleases)
 
-            if (updateInfo != null) {
-                sendUpdateNotification(updateInfo.versionName)
+            updateInfo?.let { info ->
+                sendUpdateNotification(info.versionName)
             }
 
             Result.success()

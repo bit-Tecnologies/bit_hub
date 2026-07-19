@@ -55,9 +55,8 @@ fun StoreScreen(
     isGamesTab: Boolean = false,
     error: String? = null,
     onRetry: () -> Unit = {},
-    title: String = "",
 ) {
-    var searchQuery by remember { mutableStateOf("") }
+    var searchQuery by remember { mutableStateOf(value = "") }
     val filteredApps = apps.filter { it.title.contains(searchQuery, ignoreCase = true) }
     val featured = apps.take(5)
     val recommended = apps.reversed().take(5)
@@ -166,23 +165,23 @@ private fun StoreContent(
             item {
                 CategoriesSection(
                     categories = if (isGamesTab) gameCategories else appCategories,
-                    onCategoryClick = onCategoryClick
+                    onCategoryClick = onCategoryClick,
                 )
             }
 
             item {
                 WideAppSection(
-                    if (isGamesTab) "Популярно сейчас" else "Рекомендуем вам",
-                    recommended,
-                    onAppClick
+                    title = if (isGamesTab) "Популярно сейчас" else "Рекомендуем вам",
+                    apps = recommended,
+                    onAppClick = onAppClick,
                 )
             }
 
             item {
                 AppSection(
-                    if (isGamesTab) "Топ бесплатных игр" else "Топ приложений",
-                    featuredApps.reversed(),
-                    onAppClick
+                    title = if (isGamesTab) "Топ бесплатных игр" else "Топ приложений",
+                    apps = featuredApps.reversed(),
+                    onAppClick = onAppClick,
                 )
             }
 
@@ -210,7 +209,7 @@ private fun StoreContent(
             items(filteredApps) { app ->
                 val pkg = app.packageName
                 val installedVersion = pkg?.let { installedApps[it] }
-                val needsUpdate = installedVersion != null && app.versionCode > installedVersion
+                val needsUpdate = (installedVersion != null) && (app.versionCode > installedVersion)
 
                 AppListItem(
                     app = app,
@@ -219,7 +218,7 @@ private fun StoreContent(
                     hasApk = app.id in appsWithApk,
                     downloadProgress = app.id?.let { downloadingIds[it] },
                     onInstallClick = { onInstallClick(app) },
-                    onClick = { onAppClick(app) }
+                    onClick = { onAppClick(app) },
                 )
             }
         }

@@ -32,7 +32,7 @@ fun HomeScreen(
     apps: List<App>,
     onAppClick: (App) -> Unit,
     onSearchClick: () -> Unit,
-    onProfileClick: () -> Unit
+    onProfileClick: () -> Unit,
 ) {
     val featured = apps.take(3)
     val recommended = apps.asSequence().filter { it.category != "Игры" }.take(5).toList()
@@ -69,10 +69,10 @@ fun HomeScreen(
 
             item {
                 CategoriesSection(
-                    homeCategories,
+                    categories = homeCategories,
                     onCategoryClick = {
                         scope.launch { snackbarHostState.showSnackbar("Фильтр по категориям скоро появится...") }
-                    }
+                    },
                 )
             }
 
