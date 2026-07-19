@@ -65,7 +65,7 @@ class UpdateRepository(private val context: Context) {
                 response.body<GitHubRelease>()
             }
 
-            if (release == null || release.tagName.isEmpty()) {
+            if ((release == null) || release.tagName.isEmpty()) {
                 Log.e(tag, "[UpdateCheck] Release not found or tag is empty")
                 return@withContext null
             }
@@ -91,6 +91,7 @@ class UpdateRepository(private val context: Context) {
                     changelog = release.body,
                     downloadUrl = apkAsset.downloadUrl,
                     fileName = apkAsset.name,
+                    fileSize = apkAsset.size,
                 )
             } else {
                 Log.d(tag, "[UpdateCheck] App is up to date")

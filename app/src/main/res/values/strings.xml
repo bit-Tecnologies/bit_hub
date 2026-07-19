@@ -5,80 +5,56 @@
     <string name="nav_home">Главная</string>
     <string name="nav_games">Игры</string>
     <string name="nav_apps">Приложения</string>
-    <string name="nav_categories">Категории</string>
-    <string name="nav_books">Книги</string>
-    
-    <!-- Поиск -->
-    <string name="search_placeholder">Поиск игр и приложений</string>
-    <string name="profile_description">Профиль</string>
-    <string name="search_results">Результаты поиска</string>
-    <string name="search_no_results">Ничего не найдено</string>
 
     <!-- Кнопки и статусы -->
     <string name="btn_install">Установить</string>
     <string name="btn_installed">Установлено</string>
     <string name="btn_download">Скачать</string>
     <string name="btn_open">Открыть</string>
-    <string name="btn_update">Обновить</string>
-    <string name="btn_retry">Повторить</string>
     <string name="state_downloading">Загрузка…</string>
-    <string name="msg_download_started">Загрузка началась</string>
-    <string name="error_download">Ошибка загрузки</string>
-    <string name="error_install_permission">Разрешите установку из этого источника</string>
+    <string name="btn_cancel">Отмена</string>
 
     <!-- Списки и категории -->
-    <string name="label_recommended">Рекомендуемое</string>
-    <string name="label_popular">Популярное</string>
-    <string name="label_ads_purchases">Содержит рекламу • Покупки в приложении</string>
-    <string name="label_screenshots">Скриншоты</string>
-    <string name="label_description">Описание</string>
-    <string name="label_reviews">отзывов</string>
-    <string name="label_size">Размер</string>
-    <string name="label_age">Возраст</string>
+    <string name="favorites">Избранное</string>
+    <string name="msg_updates_available">Доступно обновлений: %1$d</string>
+    <string name="msg_btn_view">Посмотреть</string>
 
-    <!-- Профиль -->
+    <plurals name="notif_apps_updates_body">
+        <item quantity="one">Для %1$d приложения в bit Hub доступна новая версия</item>
+        <item quantity="few">Для %1$d приложений в bit Hub доступны новые версии</item>
+        <item quantity="many">Для %1$d приложений в bit Hub доступны новые версии</item>
+        <item quantity="other">Для %1$d приложений в bit Hub доступны новые версии</item>
+    </plurals>
+
+    <!-- Профиль и Настройки -->
     <string name="title_account">Аккаунт</string>
     <string name="user_name_placeholder">Пользователь bit Hub</string>
     <string name="section_management">Управление</string>
-    <string name="section_network">Сеть</string>
-    <string name="section_settings">Настройки</string>
-    <string name="section_info">Инфо</string>
+    <string name="section_network_updates">Обновления и сеть</string>
+    <string name="section_network_updates_desc">Фоновая проверка и настройки загрузки</string>
     <string name="my_apps">Мои приложения и игры</string>
-    <string name="favorites">Избранное</string>
+    <string name="unit_pcs">%1$d шт.</string>
+    <string name="section_settings">Настройки</string>
     <string name="theme_settings">Тема оформления</string>
     <string name="notifications">Уведомления</string>
+    <string name="section_info">Инфо</string>
     <string name="app_version">Версия</string>
-    <string name="unit_pcs">шт.</string>
-    <string name="msg_updates_available">Доступно обновлений: %1$d</string>
-    <string name="msg_btn_view">Посмотреть</string>
-    <string name="msg_checking_updates">Проверка обновлений…</string>
-    <string name="msg_no_updates">У вас установлены последние версии всех приложений</string>
-    <string name="notif_apps_updates_title">Доступны обновления приложений</string>
-    <string name="notif_apps_updates_body">Для %1$d приложений в bit Hub доступны новые версии</string>
+    <string name="update_available">Доступно обновление</string>
+    <string name="label_size">Размер: %1$s</string>
 
-    <!-- Настройки сети -->
-    <string name="settings_wifi_only_title">Только через Wi-Fi</string>
-    <string name="settings_wifi_only_desc">Скачивание и обновление приложений</string>
+    <!-- Сеть -->
     <string name="dialog_mobile_data_title">Использовать мобильную сеть?</string>
     <string name="dialog_mobile_data_desc">Включена настройка \"Только через Wi-Fi\". Вы уверены, что хотите скачать приложение через мобильный интернет?</string>
 
-    <!-- Ошибки и уведомления -->
-    <string name="notif_installed_title">Приложение установлено</string>
-    <string name="notif_installed_body">%1$s готово к использованию</string>
-    <string name="error_no_internet">Нет интернет-соединения</string>
-    <string name="error_connection_lost">Соединение разорвано</string>
-    <string name="error_server_not_found">Не удается найти сервер bit Hub. Возможно, база данных отключена.</string>
-    <string name="error_supabase_unavailable">Сервис Supabase временно недоступен (Ошибка сервера)</string>
-    <string name="error_timeout">Время ожидания истекло. Медленный ответ от сервера.</string>
-    <string name="error_unknown_server">Ошибка сервера: база данных недоступна</string>
-    <string name="error_not_found">Приложения не найдены</string>
-    <string name="error_config">Ошибка конфигурации</string>
-    <string name="error_generic_loading">Ошибка загрузки данных</string>
-
     <!-- Темы -->
     <string name="dialog_select_theme">Выберите тему</string>
-    <string name="btn_cancel">Отмена</string>
     <string name="theme_system">Системная</string>
     <string name="theme_light">Светлая</string>
     <string name="theme_dark">Темная</string>
+
+    <!-- Уведомления -->
+    <string name="notif_update_available_title">Доступно обновление bit Hub</string>
+    <string name="notif_update_available_body">Новая версия %1$s готова к загрузке</string>
+    <string name="notif_channel_updates_name">Обновления bit Hub</string>
+    <string name="update_title_version">Доступно обновление %1$s</string>
 </resources>

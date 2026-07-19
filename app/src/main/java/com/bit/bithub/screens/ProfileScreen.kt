@@ -18,10 +18,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import android.provider.Settings
 import android.content.Intent
+import androidx.compose.ui.res.stringResource
+import com.bit.bithub.R
 import com.bit.bithub.BuildConfig
 import com.bit.bithub.components.SettingsItem
 import com.bit.bithub.components.SettingsSection
 import com.bit.bithub.components.ThemeSelectionDialog
+import com.bit.bithub.data.UpdateInfo
 import com.bit.bithub.ui.theme.ThemeMode
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -32,6 +35,7 @@ fun ProfileScreen(
     onAutoUpdateSettingsClick: () -> Unit,
     installedCount: Int,
     isCheckingUpdate: Boolean,
+    updateInfo: UpdateInfo? = null,
     onCheckUpdateClick: () -> Unit,
     onClose: () -> Unit
 ) {
@@ -51,10 +55,10 @@ fun ProfileScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Аккаунт") },
+                title = { Text(stringResource(R.string.title_account)) },
                 navigationIcon = {
                     IconButton(onClick = onClose) {
-                        Icon(Icons.Default.Close, contentDescription = "Закрыть")
+                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.btn_cancel))
                     }
                 }
             )
@@ -75,29 +79,29 @@ fun ProfileScreen(
                 Icon(Icons.Default.AccountCircle, null, modifier = Modifier.size(70.dp))
             }
             Spacer(Modifier.height(16.dp))
-            Text("Пользователь bit Hub", style = MaterialTheme.typography.headlineSmall)
+            Text(stringResource(R.string.user_name_placeholder), style = MaterialTheme.typography.headlineSmall)
             
             Spacer(Modifier.height(24.dp))
             
-            SettingsSection(title = "Управление") {
+            SettingsSection(title = stringResource(R.string.section_management)) {
                 ListItem(
-                    headlineContent = { Text("Мои приложения и игры") },
-                    trailingContent = { Text("$installedCount шт.") },
+                    headlineContent = { Text(stringResource(R.string.my_apps)) },
+                    trailingContent = { Text(stringResource(R.string.unit_pcs, installedCount)) },
                     leadingContent = { Icon(Icons.AutoMirrored.Filled.List, null) }
                 )
                 
                 ListItem(
-                    headlineContent = { Text("Обновления и сеть") },
-                    supportingContent = { Text("Фоновая проверка и настройки загрузки") },
+                    headlineContent = { Text(stringResource(R.string.section_network_updates)) },
+                    supportingContent = { Text(stringResource(R.string.section_network_updates_desc)) },
                     leadingContent = { Icon(Icons.Default.Update, null) },
                     modifier = Modifier.clickable { onAutoUpdateSettingsClick() }
                 )
             }
 
             val context = LocalContext.current
-            SettingsSection(title = "Настройки") {
-                SettingsItem(Icons.Default.Palette, "Тема оформления") { showThemeDialog = true }
-                SettingsItem(Icons.Default.Notifications, "Уведомления") {
+            SettingsSection(title = stringResource(R.string.section_settings)) {
+                SettingsItem(Icons.Default.Palette, stringResource(R.string.theme_settings)) { showThemeDialog = true }
+                SettingsItem(Icons.Default.Notifications, stringResource(R.string.notifications)) {
                     val intent = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
                         Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
                             putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
@@ -111,14 +115,24 @@ fun ProfileScreen(
                 }
             }
 
-            SettingsSection(title = "Инфо") {
+            SettingsSection(title = stringResource(R.string.section_info)) {
                 ListItem(
-                    headlineContent = { Text("Версия") },
+                    headlineContent = { Text(stringResource(R.string.app_version)) },
                     trailingContent = { 
                         if (isCheckingUpdate) {
                             CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                         } else {
-                            Text(BuildConfig.VERSION_NAME)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                if (updateInfo != null) {
+                                    Text(
+                                        stringResource(R.string.update_available),
+                                        color = MaterialTheme.colorScheme.primary,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        modifier = Modifier.padding(end = 8.dp)
+                                    )
+                                }
+                                Text(BuildConfig.VERSION_NAME)
+                            }
                         }
                     },
                     leadingContent = { Icon(Icons.Default.Info, null) },

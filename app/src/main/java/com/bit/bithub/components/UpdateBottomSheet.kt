@@ -9,10 +9,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.bit.bithub.R
 import com.bit.bithub.data.UpdateInfo
 import com.mikepenz.markdown.m3.Markdown
 import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
+import java.util.Locale
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -34,10 +37,17 @@ fun UpdateBottomSheet(
                 .padding(bottom = 40.dp)
         ) {
             Text(
-                text = "Доступно обновление ${updateInfo.versionName}",
+                text = stringResource(R.string.update_title_version, updateInfo.versionName),
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
+            )
+            
+            Text(
+                text = stringResource(R.string.label_size, formatFileSize(updateInfo.fileSize)),
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp)
             )
             
             Spacer(modifier = Modifier.height(16.dp))
@@ -63,8 +73,15 @@ fun UpdateBottomSheet(
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.medium
             ) {
-                Text("Установить", modifier = Modifier.padding(vertical = 4.dp))
+                Text(stringResource(R.string.btn_install), modifier = Modifier.padding(vertical = 4.dp))
             }
         }
     }
+}
+
+private fun formatFileSize(bytes: Long): String {
+    if (bytes <= 0) return "0 B"
+    val units = arrayOf("B", "KB", "MB", "GB", "TB")
+    val digitGroups = (Math.log10(bytes.toDouble()) / Math.log10(1024.0)).toInt()
+    return String.format(Locale.US, "%.1f %s", bytes / Math.pow(1024.0, digitGroups.toDouble()), units[digitGroups])
 }

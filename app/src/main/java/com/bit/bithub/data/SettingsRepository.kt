@@ -30,6 +30,7 @@ class SettingsRepository(private val context: Context) {
         val NETWORK_TYPE = stringPreferencesKey("network_type")
         val DOWNLOAD_PRE_RELEASES = booleanPreferencesKey("download_pre_releases")
         val APP_DOWNLOAD_WIFI_ONLY = booleanPreferencesKey("app_download_wifi_only")
+        val LAST_IGNORED_VERSION = stringPreferencesKey("last_ignored_version")
     }
 
     val backgroundUpdateCheck: Flow<Boolean> = dataStore.data
@@ -37,6 +38,12 @@ class SettingsRepository(private val context: Context) {
             if (exception is IOException) emit(emptyPreferences()) else throw exception
         }
         .map { it[BACKGROUND_UPDATE_CHECK] ?: true }
+
+    val lastIgnoredVersion: Flow<String?> = dataStore.data
+        .catch { exception ->
+            if (exception is IOException) emit(emptyPreferences()) else throw exception
+        }
+        .map { it[LAST_IGNORED_VERSION] }
 
     val updateInterval: Flow<UpdateInterval> = dataStore.data
         .catch { exception ->
@@ -86,5 +93,9 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setAppDownloadWifiOnly(enabled: Boolean) {
         dataStore.edit { it[APP_DOWNLOAD_WIFI_ONLY] = enabled }
+    }
+
+    suspend fun setLastIgnoredVersion(version: String) {
+        dataStore.edit { it[LAST_IGNORED_VERSION] = version }
     }
 }

@@ -24,5 +24,6 @@ data class UpdateInfo(
     val versionCode: Int?,
     val changelog: String,
     val downloadUrl: String,
-    val fileName: String
+    val fileName: String,
+    val fileSize: Long
 )

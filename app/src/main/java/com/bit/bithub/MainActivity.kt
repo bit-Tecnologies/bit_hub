@@ -8,7 +8,6 @@ import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.os.*
-import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.BackHandler
@@ -229,13 +228,15 @@ fun BitHubApp(
     if (selectedAppId != null) BackHandler { selectedAppId = null }
 
     val snackbarHostState = remember { SnackbarHostState() }
+    val updatesMessage = stringResource(R.string.msg_updates_available, viewModel.appsWithUpdates.size)
+    val viewLabel = stringResource(R.string.msg_btn_view)
 
     LaunchedEffect(viewModel.appsWithUpdates.size) {
         val updatesCount = viewModel.appsWithUpdates.size
         if (updatesCount > 0 && !viewModel.isLoading) {
             val result = snackbarHostState.showSnackbar(
-                message = context.getString(R.string.msg_updates_available, updatesCount),
-                actionLabel = context.getString(R.string.msg_btn_view),
+                message = updatesMessage,
+                actionLabel = viewLabel,
                 duration = SnackbarDuration.Long
             )
             if (result == SnackbarResult.ActionPerformed) {
@@ -383,6 +384,7 @@ fun BitHubApp(
                         onAutoUpdateSettingsClick = { showAutoUpdateSettings = true },
                         installedCount = viewModel.installedApps.size,
                         isCheckingUpdate = updateViewModel.isChecking,
+                        updateInfo = updateViewModel.updateInfo,
                         onCheckUpdateClick = {
                             updateViewModel.checkForUpdates(manual = true)
                         },
@@ -403,14 +405,16 @@ fun BitHubApp(
             modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 80.dp)
         )
 
-        updateViewModel.updateInfo?.let { update ->
-            UpdateBottomSheet(
-                updateInfo = update,
-                onDismiss = { updateViewModel.dismissUpdate() },
-                onUpdate = {
-                    updateViewModel.startUpdate(context, update)
-                }
-            )
+        if (updateViewModel.isUpdatePromptVisible) {
+            updateViewModel.updateInfo?.let { update ->
+                UpdateBottomSheet(
+                    updateInfo = update,
+                    onDismiss = { updateViewModel.dismissUpdate() },
+                    onUpdate = {
+                        updateViewModel.startUpdate(context, update)
+                    }
+                )
+            }
         }
 
         appToConfirmDownload?.let { app ->

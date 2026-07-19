@@ -23,6 +23,9 @@ class UpdateViewModel(application: Application) : AndroidViewModel(application) 
     
     var updateInfo by mutableStateOf<UpdateInfo?>(null)
         private set
+
+    var isUpdatePromptVisible by mutableStateOf(false)
+        private set
     
     var isChecking by mutableStateOf(value = false)
         private set
@@ -68,8 +71,17 @@ class UpdateViewModel(application: Application) : AndroidViewModel(application) 
             isChecking = true
             val includePreReleases = settingsRepository.downloadPreReleases.first()
             val info = updateRepository.checkUpdate(includePreReleases)
+            
             if (info != null) {
                 updateInfo = info
+                if (manual) {
+                    isUpdatePromptVisible = true
+                } else {
+                    val ignored = settingsRepository.lastIgnoredVersion.first()
+                    if (ignored != info.versionName) {
+                        isUpdatePromptVisible = true
+                    }
+                }
             } else if (manual) {
                 showNoUpdateMessage = true
             }
@@ -82,7 +94,12 @@ class UpdateViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun dismissUpdate() {
-        updateInfo = null
+        viewModelScope.launch {
+            updateInfo?.let {
+                settingsRepository.setLastIgnoredVersion(it.versionName)
+            }
+            isUpdatePromptVisible = false
+        }
     }
 
     fun startUpdate(context: Context, info: UpdateInfo) {

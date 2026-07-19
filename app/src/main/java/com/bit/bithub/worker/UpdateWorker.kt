@@ -68,7 +68,10 @@ class UpdateWorker(
             val updateInfo = updateRepository.checkUpdate(includePreReleases)
 
             updateInfo?.let { info ->
-                sendUpdateNotification(info.versionName)
+                val ignored = settingsRepository.lastIgnoredVersion.first()
+                if (ignored != info.versionName) {
+                    sendUpdateNotification(info.versionName)
+                }
             }
 
             Result.success()
@@ -85,7 +88,7 @@ class UpdateWorker(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 UPDATES_CHANNEL_ID,
-                "Обновления bit Hub",
+                applicationContext.getString(R.string.notif_channel_updates_name),
                 NotificationManager.IMPORTANCE_DEFAULT
             )
             notificationManager.createNotificationChannel(channel)
@@ -93,8 +96,8 @@ class UpdateWorker(
 
         val notification = NotificationCompat.Builder(applicationContext, UPDATES_CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle("Доступно обновление bit Hub")
-            .setContentText("Новая версия $versionName готова к загрузке")
+            .setContentTitle(applicationContext.getString(R.string.notif_update_available_title))
+            .setContentText(applicationContext.getString(R.string.notif_update_available_body, versionName))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
             .build()
