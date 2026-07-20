@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import androidx.core.net.toUri
-import java.io.File
 
 class UpdateReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
@@ -20,18 +19,18 @@ class UpdateReceiver : BroadcastReceiver() {
                 if (cursor.moveToFirst()) {
                     val statusIndex = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)
                     if ((statusIndex != -1) && (cursor.getInt(statusIndex) == DownloadManager.STATUS_SUCCESSFUL)) {
-                        val uriStringIndex = cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)
-                        if (uriStringIndex != -1) {
-                            val uriString = cursor.getString(uriStringIndex)
-                            uriString?.let {
-                                val uri = it.toUri()
-                                val filePath = uri.path
-                                if (filePath != null) {
-                                    val file = File(filePath)
-                                    if (file.exists() && file.name.endsWith(".apk")) {
-                                        Log.d("bit_hub_updater", "[Receiver] Download complete, starting install: ${file.name}")
-                                        UpdateInstaller.installApk(context, file)
-                                    }
+                        val apkUri = downloadManager.getUriForDownloadedFile(downloadId)
+                        if (apkUri != null) {
+                            Log.d("bit_hub_updater", "[Receiver] Download complete, starting install: $apkUri")
+                            UpdateInstaller.installApk(context, apkUri)
+                        } else {
+                            // Fallback to local URI if getUriForDownloadedFile returns null
+                            val uriStringIndex = cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)
+                            if (uriStringIndex != -1) {
+                                val uriString = cursor.getString(uriStringIndex)
+                                uriString?.let {
+                                    val uri = it.toUri()
+                                    UpdateInstaller.installApk(context, uri)
                                 }
                             }
                         }

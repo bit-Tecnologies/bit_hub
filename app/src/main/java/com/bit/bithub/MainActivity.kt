@@ -203,8 +203,15 @@ fun BitHubApp(
         }
 
         val apkFile = viewModel.getApkFile(app.title)
-        val pkg = app.packageName
-        if (apkFile.exists() && pkg != null && !viewModel.installedApps.containsKey(pkg)) {
+        val pkg = app.packageName ?: ""
+        
+        // If file exists, check if it's the right version or if we can just try installing it
+        // For simplicity, if APK exists and app is either not installed OR installed but older version, try install
+        val isInstalled = viewModel.installedApps.containsKey(pkg)
+        val installedVersion = viewModel.installedApps[pkg] ?: -1
+        val needsUpdate = isInstalled && app.versionCode > installedVersion
+
+        if (apkFile.exists() && (!isInstalled || needsUpdate)) {
             UpdateInstaller.installApk(context, apkFile)
             return
         }

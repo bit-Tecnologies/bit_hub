@@ -208,6 +208,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
                         when (status) {
                             DownloadManager.STATUS_SUCCESSFUL -> {
+                                val apkUri = dm.getUriForDownloadedFile(id)
+                                if (apkUri != null) {
+                                    com.bit.bithub.util.UpdateInstaller.installApk(getApplication(), apkUri)
+                                } else {
+                                    val file = getApkFile(appsFromCloud.find { it.id == appId }?.title ?: "")
+                                    if (file.exists()) {
+                                        com.bit.bithub.util.UpdateInstaller.installApk(getApplication(), file)
+                                    }
+                                }
                                 downloadingProgress.remove(appId)
                                 downloadIdToAppId.remove(id)
                                 refreshApkStatus()
