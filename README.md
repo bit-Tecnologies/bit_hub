@@ -1,11 +1,5 @@
 <p align="center">
-  <img src="app/src/main/res/mipmap-xxxhdpi/ic_launcher.webp" width="128" height="128" alt="bit Hub Logo">
-</p>
-
-<h1 align="center">bit Hub</h1>
-
-<p align="center">
-  <strong>Высокотехнологичная платформа для дистрибуции и управления Android-приложениями.</strong>
+  <img src="assets/readme/hero.svg" width="100%" alt="bit Hub Hero Banner">
 </p>
 
 <p align="center">
@@ -13,103 +7,77 @@
   <img src="https://img.shields.io/badge/Android-API%2023%2B-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Android">
   <img src="https://img.shields.io/badge/Compose-Material%203-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white" alt="Compose">
   <img src="https://img.shields.io/badge/Backend-Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase">
-  <img src="https://img.shields.io/badge/WorkManager-✓-FF6F00?style=for-the-badge&logo=android&logoColor=white" alt="WorkManager">
+  <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="License">
 </p>
 
 ---
 
 ## 🌟 Обзор
 
-**bit Hub** — это современное решение для дистрибуции Android-приложений, построенное на стеке **Jetpack Compose** и **Material 3**. Платформа обеспечивает прямую доставку контента пользователям без посредников, поддерживает фоновую проверку обновлений через **WorkManager** и уведомления о новых версиях. Дизайн выполнен в фирменном стиле **bit Blue (#2C6CFF)** с поддержкой динамических цветов Material You.
+**bit Hub** — это современная высокотехнологичная платформа для дистрибуции Android-приложений. Мы объединили мощь **Jetpack Compose**, гибкость **Supabase** и надежность **GitHub API**, чтобы создать идеальный мост между разработчиком и пользователем. 
+
+Платформа обеспечивает прямую доставку контента, поддерживает фоновые обновления через **WorkManager** и предлагает безупречный UI в стиле Material You.
+
+<p align="center">
+  <img src="assets/readme/workflow.svg" width="100%" alt="bit Hub Workflow Diagram">
+</p>
 
 ---
 
-## ✨ Ключевые возможности
+<img src="assets/readme/header-features.svg" width="100%" alt="Features Header">
 
 | Возможность | Описание |
-|---|---|
-| 🚀 **Динамическая витрина** | Обновление списка приложений в реальном времени через Supabase |
-| 📥 **Фоновая дистрибуция** | Нативная загрузка APK напрямую из GitHub Releases через системный `DownloadManager` |
-| ⚡ **Смарт-инсталлятор** | Автоматический перехват завершённых загрузок и запуск установки |
-| 🔔 **Push-уведомления** | Два канала уведомлений: установка приложений и проверка обновлений |
-| 🕐 **Фоновая проверка** | Периодический `UpdateWorker` сверяет версию самого приложения с GitHub Releases |
-| 🎨 **Гибкая тема** | Поддержка светлой, тёмной темы и системного режима через `ThemeMode` |
-| 📡 **Умное подключение** | Настройки скачивания: только Wi-Fi или с мобильными данными через `DataStore` |
-| 🌍 **Локализация** | Поддержка русского и английского языков |
-| 🔒 **Безопасная архитектура** | Модульное разделение и защищённое хранение ключей через `secrets.properties` |
+|:---|:---|
+| 🚀 **Dynamic Store** | Живая витрина приложений с мгновенным обновлением через Supabase. |
+| 📥 **Direct DL** | Нативная загрузка APK напрямую из GitHub Releases через `DownloadManager`. |
+| ⚡ **Smart Install** | Автоматический мониторинг завершенных загрузок и запуск установки. |
+| 🕐 **Update Engine** | Фоновый `UpdateWorker` (каждые 24ч) сверяет версии приложения с GitHub. |
+| 🎨 **Material You** | Динамические цвета, поддержка темной темы и адаптивная навигация. |
+| 📡 **Smart Network** | Умное управление трафиком: выбор Wi-Fi или мобильных данных через DataStore. |
 
 ---
 
-## 🗂 Архитектура приложения
+<img src="assets/readme/header-stack.svg" width="100%" alt="Tech Stack Header">
 
-```
+| Слой | Технологии |
+|:---|:---|
+| **UI Framework** | Jetpack Compose, Material 3, Adaptive Navigation Suite |
+| **Networking** | Ktor Client, Kotlinx Serialization |
+| **Data Engine** | Supabase (Postgrest), GitHub REST API |
+| **Local Storage** | Jetpack DataStore (Preferences) |
+| **Async Ops** | WorkManager, Kotlin Coroutines & Flow |
+| **Image Loading** | Coil |
+
+---
+
+## 🗂 Архитектура проекта
+
+```text
 com.bit.bithub
-├── components/         # Переиспользуемые Compose-компоненты
-│   ├── AppItems.kt
-│   ├── DownloadButton.kt
-│   ├── SettingsComponents.kt
-│   ├── StoreSections.kt
-│   └── UpdateBottomSheet.kt
-├── data/               # Модели данных и репозитории
-│   ├── AppModel.kt      # Модель App, AppRelease
-│   ├── SettingsRepository.kt # Управление настройками через DataStore
-│   ├── UpdateModels.kt  # Модели для обновлений (GitHub)
-│   ├── UpdateRepository.kt # Проверка обновлений через GitHub API
-│   └── UpdateViewModel.kt
-├── navigation/         # Навигация (AppDestinations)
-├── screens/            # UI-экраны
-│   ├── AppDetailScreen.kt
-│   ├── AutoUpdateSettingsScreen.kt # Настройки автообновления
-│   ├── HomeScreen.kt
-│   ├── ProfileScreen.kt
-│   └── StoreScreen.kt
-├── settings/           # Синглтон управления темой
-│   └── SettingsManager.kt
-├── ui/                 # Темы и стили (Material 3)
-├── util/               # Утилиты (Installer, Wi-Fi check)
-├── worker/             # Фоновые задачи
-│   └── UpdateWorker.kt  # Периодическая проверка обновлений
-├── MainActivity.kt
-├── MainViewModel.kt    # Основная логика загрузки и списка приложений
-└── bitHubApplication.kt # Инициализация Supabase и Notification Channels
+├── components/         # Атомарные Compose-компоненты (Кнопки, Карточки)
+├── data/               # Слой данных: Репозитории, Модели (Supabase + GitHub)
+├── navigation/         # Типизированная навигация приложения
+├── screens/            # Полноэкранные UI-модули
+├── settings/           # Управление глобальными состояниями (Тема)
+├── ui/                 # Дизайн-система (Theme, Color, Type)
+├── worker/             # Фоновые службы проверки обновлений
+├── MainActivity.kt     # Точка входа и контейнер приложения
+└── bitHubApplication.kt # Инициализация сервисов и каналов уведомлений
 ```
 
 ---
 
-## 🛠 Технологический стек
+<img src="assets/readme/header-dev.svg" width="100%" alt="Developer Guide Header">
 
-| Слой | Технологии                                                      |
-|---|-----------------------------------------------------------------|
-| **UI** | Jetpack Compose, Material 3, Adaptive Navigation Suite          |
-| **Networking** | Ktor Client, Kotlinx Serialization                              |
-| **Image Loading** | Coil                                                            |
-| **Backend** | Supabase (Postgrest)                                            |
-| **Local Storage** | Jetpack DataStore (Preferences)                                 |
-| **Background Tasks** | WorkManager (CoroutineWorker)                                   |
-| **Architecture** | MVVM, Clean Architecture                                        |
-| **Notifications** | NotificationCompat, каналы `INSTALL_CHANNEL`, `UPDATES_CHANNEL` |
-| **Min SDK** | 23 (Android 6.0+)                                               |
-| **Target SDK** | 37 (Android 17)                                                 |
-| **Language** | Kotlin 2.0+                                                     |
-
----
-
-## Инструкция для разработчиков
-
-### 1. Настройка окружения
-
-Создайте файл `secrets.properties` в корневом каталоге проекта:
-
+### 1. Подготовка окружения
+Создайте `secrets.properties` в корне проекта:
 ```properties
-SUPABASE_URL=https://ваш-проект.supabase.co
-SUPABASE_KEY=ваш-анонимный-ключ
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_KEY=your-anon-key
 ```
 
-> ⚠️ Файл `secrets.properties` добавлен в `.gitignore` — не передавайте ключи в репозиторий.
-
-### 2. Схема данных (Supabase)
-
-Приложение использует две связанные таблицы: `apps` и `app_releases`.
+### 2. Схема базы данных
+Для работы магазина необходимо развернуть две таблицы в Supabase: `apps` и `app_releases`.
 
 ```sql
 -- Таблица приложений
@@ -138,42 +106,14 @@ create table app_releases (
   changelog      text,
   created_at     timestamp with time zone default now()
 );
-
--- Публичный доступ на чтение (Row Level Security)
-alter table apps enable row level security;
-create policy "Allow public read access" on apps for select using (true);
-alter table app_releases enable row level security;
-create policy "Allow public read access" on app_releases for select using (true);
 ```
 
-### 3. Фоновые задачи (WorkManager)
+### 3. Настройка обновлений
+Фоновое поведение регулируется через `SettingsRepository`. По умолчанию проверка происходит каждые 24 часа при наличии любого сетевого соединения.
 
-`UpdateWorker` проверяет наличие новых версий **bit Hub** на GitHub. Настройки хранятся в `SettingsRepository` (DataStore):
+---
 
-| Настройка | Описание |
-|---|---|
-| `backgroundUpdateCheck` | Включить фоновую проверку |
-| `updateInterval` | Интервал проверки (по умолчанию 24ч) |
-| `networkType` | Тип сети для проверки (Wi-Fi / Любая) |
-| `appDownloadWifiOnly` | Скачивание приложений только по Wi-Fi |
-
-При обнаружении обновлений пользователь получает уведомление в канале `UPDATES_CHANNEL`.
-
-### 4. Каналы уведомлений
-
-| ID | Назначение |
-|---|---|
-| `INSTALL_CHANNEL` | Успешная установка приложения |
-| `UPDATES_CHANNEL` | Доступны обновления для bit Hub |
-
-### 5. Стандарты именования
-
-- Бренд: **bit Hub** (регистр «bit» всегда строчный).
-- Package: `com.bit.bithub`.
-- Entry Point: `BitHubApplication`.
-
-### 6. Сборка и развёртывание
-
-1. Выполните **Sync Project with Gradle Files**.
-2. Убедитесь, что `secrets.properties` содержит актуальные ключи Supabase.
-3. Соберите проект через **Build → Rebuild Project**.
+<p align="center">
+  <sub>Built with ❤️ by <b>bit Technologies</b></sub><br>
+  <img src="https://img.shields.io/badge/README_MADE_WITH-Jetpack_Compose_Glimmer-2C6CFF?style=flat-square" alt="Made With">
+</p>
