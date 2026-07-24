@@ -38,9 +38,10 @@ build/
 *.dex
 *.class
 *.aar
+/app/release/
 # Не игнорируем jar обертку Gradle
 !gradle-wrapper.jar
-/app
+
 # --- ЛОГИ И АНАЛИЗ ---
 *.log
 *.hprof
@@ -53,3 +54,7 @@ desktop.ini
 /out/
 *.tmp
 *.bak
+
+# --- AGENT ARTIFACTS ---
+.artifacts/
+*.artifact.md
