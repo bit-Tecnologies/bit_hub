@@ -50,6 +50,30 @@ object UpdateInstaller {
         }
     }
 
+    fun getApkVersionCode(context: Context, file: File): Int? {
+        return try {
+            val packageInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                context.packageManager.getPackageArchiveInfo(
+                    file.absolutePath,
+                    android.content.pm.PackageManager.PackageInfoFlags.of(0L)
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                context.packageManager.getPackageArchiveInfo(file.absolutePath, 0)
+            }
+            
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                packageInfo?.longVersionCode?.toInt()
+            } else {
+                @Suppress("DEPRECATION")
+                packageInfo?.versionCode
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "[Installer] Failed to get APK version code: ${e.message}")
+            null
+        }
+    }
+
     private fun checkInstallPermission(context: Context): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context.packageManager.canRequestPackageInstalls()

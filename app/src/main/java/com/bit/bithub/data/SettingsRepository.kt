@@ -31,7 +31,14 @@ class SettingsRepository(private val context: Context) {
         val DOWNLOAD_PRE_RELEASES = booleanPreferencesKey("download_pre_releases")
         val APP_DOWNLOAD_WIFI_ONLY = booleanPreferencesKey("app_download_wifi_only")
         val LAST_IGNORED_VERSION = stringPreferencesKey("last_ignored_version")
+        val FAVORITES = stringSetPreferencesKey("favorites")
     }
+
+    val favorites: Flow<Set<String>> = dataStore.data
+        .catch { exception ->
+            if (exception is IOException) emit(emptyPreferences()) else throw exception
+        }
+        .map { it[FAVORITES] ?: emptySet() }
 
     val backgroundUpdateCheck: Flow<Boolean> = dataStore.data
         .catch { exception ->
@@ -97,5 +104,16 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setLastIgnoredVersion(version: String) {
         dataStore.edit { it[LAST_IGNORED_VERSION] = version }
+    }
+
+    suspend fun toggleFavorite(appId: String) {
+        dataStore.edit { preferences ->
+            val current = preferences[FAVORITES] ?: emptySet()
+            if (current.contains(appId)) {
+                preferences[FAVORITES] = current - appId
+            } else {
+                preferences[FAVORITES] = current + appId
+            }
+        }
     }
 }

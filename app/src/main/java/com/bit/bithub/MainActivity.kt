@@ -54,9 +54,13 @@ import kotlin.time.Duration.Companion.seconds
 
 class MainActivity : ComponentActivity() {
 
+    private var initialAppId by mutableStateOf<Long?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
+
+        handleIntent(intent)
 
         enableEdgeToEdge()
         setContent {
@@ -76,7 +80,31 @@ class MainActivity : ComponentActivity() {
             }
 
             BitHubTheme(themeMode = currentTheme) {
-                BitHubApp()
+                BitHubApp(initialAppId = initialAppId)
+            }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(intent: Intent?) {
+        if (intent?.action == Intent.ACTION_VIEW) {
+            val data = intent.data ?: return
+            
+            // Обработка bithub://app?id=...
+            if (data.scheme == "bithub" && data.host == "app") {
+                val idStr = data.getQueryParameter("id")
+                initialAppId = idStr?.toLongOrNull()
+            }
+            // Обработка https://bit-tecnologies.github.io/bit_hub/app?id=...
+            else if ((data.scheme == "http" || data.scheme == "https") && 
+                data.host == "bit-tecnologies.github.io" && 
+                data.path?.startsWith("/bit_hub/app") == true) {
+                val idStr = data.getQueryParameter("id")
+                initialAppId = idStr?.toLongOrNull()
             }
         }
     }
@@ -90,7 +118,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun BitHubApp(
     viewModel: MainViewModel = viewModel(),
-    updateViewModel: UpdateViewModel = viewModel()
+    updateViewModel: UpdateViewModel = viewModel(),
+    initialAppId: Long? = null
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -101,6 +130,12 @@ fun BitHubApp(
 
     var currentDestination by rememberSaveable { mutableStateOf(value = AppDestinations.HOME) }
     var selectedAppId by rememberSaveable { mutableStateOf<Long?>(value = null) }
+
+    LaunchedEffect(initialAppId) {
+        if (initialAppId != null) {
+            selectedAppId = initialAppId
+        }
+    }
     var showProfileSheet by rememberSaveable { mutableStateOf(value = false) }
     var appToConfirmDownload by remember { mutableStateOf<App?>(value = null) }
 
@@ -205,15 +240,17 @@ fun BitHubApp(
         val apkFile = viewModel.getApkFile(app.title)
         val pkg = app.packageName ?: ""
         
-        // If file exists, check if it's the right version or if we can just try installing it
-        // For simplicity, if APK exists and app is either not installed OR installed but older version, try install
-        val isInstalled = viewModel.installedApps.containsKey(pkg)
-        val installedVersion = viewModel.installedApps[pkg] ?: -1
-        val needsUpdate = isInstalled && app.versionCode > installedVersion
-
-        if (apkFile.exists() && (!isInstalled || needsUpdate)) {
-            UpdateInstaller.installApk(context, apkFile)
-            return
+        // Проверяем существующий файл
+        if (apkFile.exists()) {
+            val fileVersion = UpdateInstaller.getApkVersionCode(context, apkFile)
+            if (fileVersion == null || fileVersion < app.versionCode) {
+                // Файл битый или версия старая - удаляем
+                apkFile.delete()
+            } else {
+                // Файл актуальный - устанавливаем
+                UpdateInstaller.installApk(context, apkFile)
+                return
+            }
         }
 
         if (SettingsManager.downloadWifiOnly && !isWifiConnected(context)) {
@@ -294,7 +331,7 @@ fun BitHubApp(
 
                     AppDetailScreen(
                         app = app,
-                        isFavorite = false,
+                        isFavorite = viewModel.favorites.contains(app.id.toString()),
                         isInstalled = isInstalled,
                         needsUpdate = isUpdate,
                         hasApk = viewModel.appsWithApk.contains(app.id),
@@ -304,8 +341,12 @@ fun BitHubApp(
                             vibrate()
                             selectedAppId = null
                         },
-                        onToggleFavorite = {},
+                        onToggleFavorite = {
+                            vibrate()
+                            viewModel.toggleFavorite(app)
+                        },
                         onInstall = { handleInstallClick(app) },
+                        onDeleteApk = { viewModel.deleteApk(app) }
                     )
                 } else if (currentDestination == AppDestinations.HOME) {
                     HomeScreen(

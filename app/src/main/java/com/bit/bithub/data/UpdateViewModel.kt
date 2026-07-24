@@ -105,10 +105,16 @@ class UpdateViewModel(application: Application) : AndroidViewModel(application) 
     fun startUpdate(context: Context, info: UpdateInfo) {
         val cachedFile = updateRepository.getCachedUpdateFile(info.fileName)
         if (cachedFile != null) {
-            Log.d("bit_hub_updater", "[Installer] Found cached APK: ${info.fileName}")
-            UpdateInstaller.installApk(context, cachedFile)
-            updateInfo = null
-            return
+            val fileVersion = UpdateInstaller.getApkVersionCode(context, cachedFile)
+            if (fileVersion != null && fileVersion >= (info.versionCode ?: 0)) {
+                Log.d("bit_hub_updater", "[Installer] Found valid cached APK: ${info.fileName}")
+                UpdateInstaller.installApk(context, cachedFile)
+                updateInfo = null
+                return
+            } else {
+                Log.d("bit_hub_updater", "[Installer] Cached APK is invalid or old, deleting: ${info.fileName}")
+                cachedFile.delete()
+            }
         }
 
         updateRepository.clearOldUpdates()

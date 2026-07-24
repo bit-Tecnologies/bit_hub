@@ -46,6 +46,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val downloadingProgress = mutableStateMapOf<Long, Float>()
     val downloadIdToAppId = mutableStateMapOf<Long, Long>()
 
+    var favorites by mutableStateOf<Set<String>>(emptySet())
+        private set
+
     val appsWithUpdates: List<App> by derivedStateOf {
         appsFromCloud.filter { app ->
             val pkg = app.packageName ?: return@filter false
@@ -56,6 +59,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         loadData()
+        observeFavorites()
+    }
+
+    private fun observeFavorites() {
+        viewModelScope.launch {
+            settingsRepository.favorites.collect {
+                favorites = it
+            }
+        }
+    }
+
+    fun toggleFavorite(app: App) {
+        val id = app.id?.toString() ?: return
+        viewModelScope.launch {
+            settingsRepository.toggleFavorite(id)
+        }
     }
 
     fun loadData() {
@@ -153,7 +172,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun getApkFile(name: String): File {
-        return File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "$name.apk")
+        val downloadDir = getApplication<Application>().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+        return File(downloadDir, "$name.apk")
     }
 
     fun download(app: App, stateDownloadingText: String) {
@@ -170,7 +190,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     .setTitle(name)
                     .setDescription(stateDownloadingText)
                     .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                    .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "$name.apk")
+                    .setDestinationInExternalFilesDir(getApplication(), Environment.DIRECTORY_DOWNLOADS, "$name.apk")
                     .setAllowedOverMetered(useMobile && !wifiOnly)
                     .setAllowedOverRoaming(useMobile && !wifiOnly)
                     .setAllowedNetworkTypes(
@@ -181,7 +201,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val id = dm.enqueue(request)
                 app.id?.let { appId ->
                     downloadIdToAppId[id] = appId
-                    downloadingProgress[appId] = 0.01f
+                    downloadingProgress[appId] = 0.001f // Совсем чуть-чуть, чтобы показать начало
                 }
                 observeDownloads()
             } catch (_: Exception) { }
@@ -229,7 +249,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                                 val total = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES))
                                 val downloaded = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR))
                                 if (total > 0) {
-                                    downloadingProgress[appId] = downloaded.toFloat() / total.toFloat()
+                                    val newProgress = downloaded.toFloat() / total.toFloat()
+                                    val currentProgress = downloadingProgress[appId] ?: 0f
+                                    // Обновляем только если прогресс реально вырос, чтобы избежать скачков к 0%
+                                    if (newProgress > currentProgress) {
+                                        downloadingProgress[appId] = newProgress
+                                    }
                                 }
                             }
                         }
@@ -248,6 +273,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             dm.remove(downloadId)
             downloadIdToAppId.remove(downloadId)
             downloadingProgress.remove(appId)
+        }
+    }
+
+    fun deleteApk(app: App) {
+        val file = getApkFile(app.title)
+        if (file.exists()) {
+            file.delete()
+            refreshApkStatus()
         }
     }
 }

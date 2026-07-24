@@ -10,9 +10,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,7 +44,11 @@ fun AppDetailScreen(
     onBack: () -> Unit,
     onToggleFavorite: () -> Unit,
     onInstall: () -> Unit,
+    onDeleteApk: () -> Unit,
 ) {
+    var showMenu by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -64,14 +69,40 @@ fun AppDetailScreen(
                     val context = LocalContext.current
                     IconButton(
                         onClick = {
+                            val appId = app.id
+                            val shareText = if (appId != null) {
+                                "Посмотри ${app.title} в bit Hub! Открыть: https://bit-tecnologies.github.io/bit_hub/app?id=$appId"
+                            } else {
+                                "Скачай ${app.title} в bit Hub! Приложение от ${app.developer}"
+                            }
                             val sendIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
                                 type = "text/plain"
-                                putExtra(android.content.Intent.EXTRA_TEXT, "Скачай ${app.title} в bit Hub! Приложение от ${app.developer}")
+                                putExtra(android.content.Intent.EXTRA_TEXT, shareText)
                             }
                             context.startActivity(android.content.Intent.createChooser(sendIntent, null))
                         }
                     ) {
                         Icon(Icons.Default.Share, null)
+                    }
+
+                    Box {
+                        IconButton(onClick = { showMenu = true }) {
+                            Icon(Icons.Default.MoreVert, contentDescription = null)
+                        }
+                        DropdownMenu(
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Удалить загрузочный APK") },
+                                onClick = {
+                                    showMenu = false
+                                    showDeleteDialog = true
+                                },
+                                enabled = hasApk,
+                                leadingIcon = { Icon(Icons.Default.MoreVert, null) } // Can use a different icon if wanted
+                            )
+                        }
                     }
                 }
             )
@@ -83,6 +114,7 @@ fun AppDetailScreen(
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
         ) {
+            // ... (rest of content)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -111,14 +143,20 @@ fun AppDetailScreen(
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Row(
-                    modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    modifier = Modifier.padding(vertical = 16.dp).fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    AppStatItem("${app.rating} ★", "Рейтинг")
-                    VerticalDivider(Modifier.height(40.dp))
-                    AppStatItem(app.formattedSize, "Размер")
-                    VerticalDivider(Modifier.height(40.dp))
-                    AppStatItem(app.versionName, "Версия")
+                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                        AppStatItem("${app.rating} ★", "Рейтинг")
+                    }
+                    VerticalDivider(Modifier.height(32.dp), thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
+                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                        AppStatItem(app.formattedSize, "Размер")
+                    }
+                    VerticalDivider(Modifier.height(32.dp), thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
+                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                        AppStatItem(app.versionName, "Версия")
+                    }
                 }
             }
 
@@ -128,11 +166,11 @@ fun AppDetailScreen(
                 needsUpdate -> "Обновить"
                 isInstalled -> stringResource(R.string.btn_installed)
                 hasApk -> stringResource(R.string.btn_install)
-                else -> stringResource(R.string.btn_install)
+                else -> stringResource(R.string.btn_download)
             }
 
             DownloadButton(
-                text = if (isInstalled && !needsUpdate) stringResource(R.string.btn_installed) else if (hasApk && !isInstalled) stringResource(R.string.btn_install) else buttonText,
+                text = buttonText,
                 progress = if (isDownloading) downloadProgress else null,
                 onClick = onInstall,
                 modifier = Modifier
@@ -182,5 +220,28 @@ fun AppDetailScreen(
                 style = MaterialTheme.typography.bodyMedium
             )
         }
+    }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Удалить файл?") },
+            text = { Text("Вы действительно хотите удалить скачанный APK-файл приложения ${app.title}?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteDialog = false
+                        onDeleteApk()
+                    }
+                ) {
+                    Text("Удалить", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Отмена")
+                }
+            }
+        )
     }
 }
