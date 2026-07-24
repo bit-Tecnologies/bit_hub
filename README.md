@@ -32,11 +32,11 @@
 | 📥 **Фоновая дистрибуция** | Нативная загрузка APK напрямую из GitHub Releases через системный `DownloadManager` |
 | ⚡ **Смарт-инсталлятор** | Автоматический перехват завершённых загрузок и запуск установки |
 | 🔔 **Push-уведомления** | Два канала уведомлений: установка приложений и проверка обновлений |
-| 🕐 **Фоновая проверка** | Периодический `UpdateWorker` (каждые 2 дня) сверяет версии установленных приложений с базой данных |
+| 🕐 **Фоновая проверка** | Периодический `UpdateWorker` сверяет версию самого приложения с GitHub Releases |
 | 🎨 **Гибкая тема** | Поддержка светлой, тёмной темы и системного режима через `ThemeMode` |
-| 📡 **Умное подключение** | Настройки скачивания: только Wi-Fi или с мобильными данными |
+| 📡 **Умное подключение** | Настройки скачивания: только Wi-Fi или с мобильными данными через `DataStore` |
 | 🌍 **Локализация** | Поддержка русского и английского языков |
-| 🔒 **Безопасная архитектура** | Модульное разделение (Data / UI / Logic) и защищённое хранение ключей через `secrets.properties` |
+| 🔒 **Безопасная архитектура** | Модульное разделение и защищённое хранение ключей через `secrets.properties` |
 
 ---
 
@@ -44,49 +44,53 @@
 
 ```
 com.bit.bithub
-├── data/               # Модели данных и репозитории
-│   ├── AppModel.kt      # Модель AppItem + mock-данные
-│   ├── UpdateModels.kt  # Модели для обновлений
-│   ├── UpdateRepository.kt
-│   └── UpdateViewModel.kt
-├── screens/            # UI-экраны
-│   ├── HomeScreen.kt    # Главный экран (карусель, категории, секции)
-│   ├── StoreScreen.kt   # Магазин приложений с поиском
-│   ├── AppDetailScreen.kt # Детальная страница приложения
-│   └── ProfileScreen.kt # Настройки и профиль пользователя
 ├── components/         # Переиспользуемые Compose-компоненты
 │   ├── AppItems.kt
 │   ├── DownloadButton.kt
 │   ├── SettingsComponents.kt
 │   ├── StoreSections.kt
 │   └── UpdateBottomSheet.kt
+├── data/               # Модели данных и репозитории
+│   ├── AppModel.kt      # Модель App, AppRelease
+│   ├── SettingsRepository.kt # Управление настройками через DataStore
+│   ├── UpdateModels.kt  # Модели для обновлений (GitHub)
+│   ├── UpdateRepository.kt # Проверка обновлений через GitHub API
+│   └── UpdateViewModel.kt
+├── navigation/         # Навигация (AppDestinations)
+├── screens/            # UI-экраны
+│   ├── AppDetailScreen.kt
+│   ├── AutoUpdateSettingsScreen.kt # Настройки автообновления
+│   ├── HomeScreen.kt
+│   ├── ProfileScreen.kt
+│   └── StoreScreen.kt
+├── settings/           # Синглтон управления темой
+│   └── SettingsManager.kt
+├── ui/                 # Темы и стили (Material 3)
+├── util/               # Утилиты (Installer, Wi-Fi check)
 ├── worker/             # Фоновые задачи
 │   └── UpdateWorker.kt  # Периодическая проверка обновлений
-├── settings/           # Управление настройками
-│   └── SettingsManager.kt
-├── navigation/         # Навигация
-├── ui/                 # Темы и стили
 ├── MainActivity.kt
-├── MainViewModel.kt
-└── bitHubApplication.kt # Application-класс, инициализация Supabase и WorkManager
+├── MainViewModel.kt    # Основная логика загрузки и списка приложений
+└── bitHubApplication.kt # Инициализация Supabase и Notification Channels
 ```
 
 ---
 
 ## 🛠 Технологический стек
 
-| Слой | Технологии |
-|---|---|
-| **UI** | Jetpack Compose, Material 3, Adaptive Navigation Suite |
-| **Networking** | Ktor Client, Kotlinx Serialization |
-| **Image Loading** | Coil |
-| **Backend** | Supabase (Postgrest) |
-| **Background Tasks** | WorkManager (CoroutineWorker) |
-| **Architecture** | MVVM, Clean Architecture |
-| **Notifications** | NotificationCompat, два канала (`INSTALL_CHANNEL`, `UPDATES_CHANNEL`) |
-| **Min SDK** | 23 (Android 6.0+) |
-| **Target SDK** | 36 (Android 16) |
-| **Language** | Kotlin 2.0+ |
+| Слой | Технологии                                                      |
+|---|-----------------------------------------------------------------|
+| **UI** | Jetpack Compose, Material 3, Adaptive Navigation Suite          |
+| **Networking** | Ktor Client, Kotlinx Serialization                              |
+| **Image Loading** | Coil                                                            |
+| **Backend** | Supabase (Postgrest)                                            |
+| **Local Storage** | Jetpack DataStore (Preferences)                                 |
+| **Background Tasks** | WorkManager (CoroutineWorker)                                   |
+| **Architecture** | MVVM, Clean Architecture                                        |
+| **Notifications** | NotificationCompat, каналы `INSTALL_CHANNEL`, `UPDATES_CHANNEL` |
+| **Min SDK** | 23 (Android 6.0+)                                               |
+| **Target SDK** | 37 (Android 17)                                                 |
+| **Language** | Kotlin 2.0+                                                     |
 
 ---
 
@@ -105,41 +109,53 @@ SUPABASE_KEY=ваш-анонимный-ключ
 
 ### 2. Схема данных (Supabase)
 
-Для развёртывания бэкенда выполните SQL-скрипт:
+Приложение использует две связанные таблицы: `apps` и `app_releases`.
 
 ```sql
+-- Таблица приложений
 create table apps (
   id             bigint primary key generated always as identity,
   title          text not null,
   developer      text,
   rating         float8,
-  reviews        text,
-  size           text,
   description    text,
   icon_url       text,
-  icon_color     text,        -- HEX-код цвета иконки (#RRGGBB)
-  is_game        boolean default false,
-  download_url   text,        -- прямая ссылка на APK в GitHub Releases
-  package_name   text,        -- например, com.bit.stream
-  version_code   text,        -- строка версии: "1.2.0"
-  version_number int default 0 -- числовой код версии для сравнения
+  category       text,
+  package_name   text,
+  is_featured    boolean default false,
+  created_at     timestamp with time zone default now()
+);
+
+-- Таблица релизов
+create table app_releases (
+  id             bigint primary key generated always as identity,
+  app_id         bigint references apps(id) on delete cascade,
+  platform       text default 'android',
+  version_name   text,
+  version_code   int,
+  download_url   text,
+  size_bytes     bigint,
+  changelog      text,
+  created_at     timestamp with time zone default now()
 );
 
 -- Публичный доступ на чтение (Row Level Security)
 alter table apps enable row level security;
 create policy "Allow public read access" on apps for select using (true);
+alter table app_releases enable row level security;
+create policy "Allow public read access" on app_releases for select using (true);
 ```
 
 ### 3. Фоновые задачи (WorkManager)
 
-`UpdateWorker` запускается автоматически каждые **2 дня** при наличии сети. Поведение регулируется через `SettingsManager`:
+`UpdateWorker` проверяет наличие новых версий **bit Hub** на GitHub. Настройки хранятся в `SettingsRepository` (DataStore):
 
 | Настройка | Описание |
 |---|---|
-| `periodicUpdateCheck` | Включить/выключить фоновую проверку |
-| `updateOverMobileData` | Разрешить проверку через мобильную сеть |
-| `downloadWifiOnly` | Скачивать приложения только по Wi-Fi |
-| `useMobileData` | Общий доступ к интернету через мобильную сеть |
+| `backgroundUpdateCheck` | Включить фоновую проверку |
+| `updateInterval` | Интервал проверки (по умолчанию 24ч) |
+| `networkType` | Тип сети для проверки (Wi-Fi / Любая) |
+| `appDownloadWifiOnly` | Скачивание приложений только по Wi-Fi |
 
 При обнаружении обновлений пользователь получает уведомление в канале `UPDATES_CHANNEL`.
 
@@ -148,7 +164,7 @@ create policy "Allow public read access" on apps for select using (true);
 | ID | Назначение |
 |---|---|
 | `INSTALL_CHANNEL` | Успешная установка приложения |
-| `UPDATES_CHANNEL` | Доступны обновления для установленных приложений |
+| `UPDATES_CHANNEL` | Доступны обновления для bit Hub |
 
 ### 5. Стандарты именования
 
@@ -160,5 +176,4 @@ create policy "Allow public read access" on apps for select using (true);
 
 1. Выполните **Sync Project with Gradle Files**.
 2. Убедитесь, что `secrets.properties` содержит актуальные ключи Supabase.
-3. Проверьте, что `download_url` в базе данных ведёт напрямую на `.apk`-файл.
-4. Соберите проект через **Build → Rebuild Project**.
+3. Соберите проект через **Build → Rebuild Project**.
