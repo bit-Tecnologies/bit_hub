@@ -114,6 +114,5 @@ create table app_releases (
 ---
 
 <p align="center">
-  <sub>Built with ❤️ by <b>bit Technologies</b></sub><br>
-  <img src="https://img.shields.io/badge/README_MADE_WITH-Jetpack_Compose_Glimmer-2C6CFF?style=flat-square" alt="Made With">
+  <sub>Built with ❤️ by <b>bit Tecnologies</b></sub><br>
 </p>
