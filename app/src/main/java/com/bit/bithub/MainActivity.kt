@@ -106,6 +106,13 @@ class MainActivity : ComponentActivity() {
                 val idStr = data.getQueryParameter("id")
                 initialAppId = idStr?.toLongOrNull()
             }
+            // Обработка https://bit-tecnologies.pages.dev/app?id=...
+            else if ((data.scheme == "http" || data.scheme == "https") && 
+                data.host == "bit-tecnologies.pages.dev" && 
+                data.path?.startsWith("/app") == true) {
+                val idStr = data.getQueryParameter("id")
+                initialAppId = idStr?.toLongOrNull()
+            }
         }
     }
 
