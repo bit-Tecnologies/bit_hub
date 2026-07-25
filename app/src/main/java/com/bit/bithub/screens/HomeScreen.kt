@@ -17,19 +17,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.bit.bithub.components.*
 import com.bit.bithub.data.App
+import com.bit.bithub.data.MockData
 import kotlinx.coroutines.launch
-
-val homeCategories = listOf(
-    "\uD83C\uDFAE" to "Игры",
-    "\uD83D\uDCF1" to "Связь",
-    "\uD83D\uDE80" to "Развлечения",
-    "\uD83D\uDCDD" to "Инструменты",
-)
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun HomeScreen(
     apps: List<App>,
+    categories: List<String>,
     onAppClick: (App) -> Unit,
     onSearchClick: () -> Unit,
     onProfileClick: () -> Unit,
@@ -69,7 +64,7 @@ fun HomeScreen(
 
             item {
                 CategoriesSection(
-                    categories = homeCategories,
+                    categories = categories,
                     onCategoryClick = {
                         scope.launch { snackbarHostState.showSnackbar("Фильтр по категориям скоро появится...") }
                     },
@@ -92,20 +87,13 @@ fun HomeScreen(
                         contentPadding = PaddingValues(horizontal = 16.dp),
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        item {
+                        items(MockData.newsList.size) { index ->
+                            val news = MockData.newsList[index]
                             NewsCard(
-                                title = "Летняя распродажа игр",
-                                description = "Скидки до 90% на хиты этого сезона",
-                                imageUrl = "https://picsum.photos/id/10/600/400",
-                                onClick = {}
-                            )
-                        }
-                        item {
-                            NewsCard(
-                                title = "Обновление bit Stream",
-                                description = "Теперь с поддержкой 4K и HDR",
-                                imageUrl = "https://picsum.photos/id/20/600/400",
-                                onClick = {}
+                                title = news.title,
+                                description = news.description,
+                                imageUrl = news.imageUrl,
+                                onClick = news.onClick
                             )
                         }
                     }

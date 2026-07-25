@@ -366,6 +366,7 @@ fun BitHubApp(
                 if (currentDestination == AppDestinations.HOME) {
                     HomeScreen(
                         apps = viewModel.appsFromCloud,
+                        categories = viewModel.categories,
                         onAppClick = { appItem ->
                             vibrate()
                             selectedAppId = appItem.id
@@ -384,6 +385,11 @@ fun BitHubApp(
                             AppDestinations.GAMES -> viewModel.appsFromCloud.filter { it.category == "Игры" }
                             AppDestinations.APPS -> viewModel.appsFromCloud.filter { it.category != "Игры" }
                             else -> viewModel.appsFromCloud
+                        },
+                        categories = if (currentDestination == AppDestinations.GAMES) {
+                            viewModel.categories.filter { it == "Игры" || it == "Games" } // Simplifying for now, or just pass all
+                        } else {
+                            viewModel.categories.filter { it != "Игры" && it != "Games" }
                         },
                         isGamesTab = currentDestination == AppDestinations.GAMES,
                         onAppClick = { appItem ->

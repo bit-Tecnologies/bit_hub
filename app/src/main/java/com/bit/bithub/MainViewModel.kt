@@ -57,6 +57,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    val categories: List<String> by derivedStateOf {
+        appsFromCloud.mapNotNull { it.category }.distinct()
+    }
+
     init {
         loadData()
         observeFavorites()

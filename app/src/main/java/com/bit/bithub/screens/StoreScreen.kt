@@ -22,28 +22,11 @@ import com.bit.bithub.components.*
 import com.bit.bithub.data.App
 import kotlinx.coroutines.launch
 
-val appCategories = listOf(
-    "\uD83D\uDCDD" to "Инструменты",
-    "\uD83D\uDCF1" to "Связь",
-    "\uD83D\uDE80" to "Развлечения",
-    "\uD83D\uDCF7" to "Фото",
-    "\uD83C\uDFA7" to "Музыка",
-    "\uD83D\uDCB0" to "Финансы",
-)
-
-val gameCategories = listOf(
-    "\uD83D\uDCA5" to "Экшен",
-    "\uD83D\uDDE1️" to "RPG",
-    "\uD83E\uDDE0" to "Головоломки",
-    "\uD83C\uDFCE️" to "Гонки",
-    "\uD83D\uDCAA" to "Спорт",
-    "\uD83D\uDCBB" to "Симуляторы"
-)
-
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun StoreScreen(
     apps: List<App>,
+    categories: List<String>,
     onAppClick: (App) -> Unit,
     onInstallClick: (App) -> Unit,
     installedApps: Map<String, Int>,
@@ -88,6 +71,7 @@ fun StoreScreen(
                     featuredApps = featured,
                     recommended = recommended,
                     filteredApps = filteredApps,
+                    categories = categories,
                     installedApps = installedApps,
                     appsWithApk = appsWithApk,
                     downloadingIds = downloadingIds,
@@ -147,6 +131,7 @@ private fun StoreContent(
     featuredApps: List<App>,
     recommended: List<App>,
     filteredApps: List<App>,
+    categories: List<String>,
     installedApps: Map<String, Int>,
     appsWithApk: Set<Long>,
     downloadingIds: Map<Long, Float>,
@@ -164,7 +149,7 @@ private fun StoreContent(
 
             item {
                 CategoriesSection(
-                    categories = if (isGamesTab) gameCategories else appCategories,
+                    categories = categories,
                     onCategoryClick = onCategoryClick,
                 )
             }

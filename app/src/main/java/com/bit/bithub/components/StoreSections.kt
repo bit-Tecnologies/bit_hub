@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.bit.bithub.data.App
+import com.bit.bithub.data.MockData
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -39,7 +40,7 @@ fun HomeCarousel(
 
 @Composable
 fun CategoriesSection(
-    categories: List<Pair<String, String>>,
+    categories: List<String>,
     onCategoryClick: (String) -> Unit
 ) {
     if (categories.isEmpty()) return
@@ -55,9 +56,10 @@ fun CategoriesSection(
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(categories) { (icon, name) ->
-                CategoryTile(name, icon, MaterialTheme.colorScheme.primary) {
-                    onCategoryClick(name)
+            items(categories) { categoryName ->
+                val (icon, displayTitle) = MockData.getCategoryDisplayInfo(categoryName)
+                CategoryTile(displayTitle, icon, MaterialTheme.colorScheme.primary) {
+                    onCategoryClick(categoryName)
                 }
             }
         }
