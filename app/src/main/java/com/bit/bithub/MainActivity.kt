@@ -87,10 +87,12 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        setIntent(intent)
         handleIntent(intent)
     }
 
     private fun handleIntent(intent: Intent?) {
+        android.util.Log.d("BitHubIntent", "Handling intent: ${intent?.data}")
         if (intent?.action == Intent.ACTION_VIEW) {
             val data = intent.data ?: return
             
@@ -323,39 +325,45 @@ fun BitHubApp(
                 }
             }
         ) {
-            if (viewModel.isLoading && viewModel.appsFromCloud.isEmpty()) {
+            val app = viewModel.appsFromCloud.find { it.id == selectedAppId }
+            
+            if (app != null) {
+                val pkg = app.packageName
+                val isInstalled = pkg?.let { viewModel.installedApps.containsKey(it) } ?: false
+                val currentVersion = pkg?.let { viewModel.installedApps[it] } ?: 0
+                val isUpdate = isInstalled && app.versionCode > currentVersion
+                val progress = viewModel.downloadingProgress[app.id]
+
+                AppDetailScreen(
+                    app = app,
+                    isFavorite = viewModel.favorites.contains(app.id.toString()),
+                    isInstalled = isInstalled,
+                    needsUpdate = isUpdate,
+                    hasApk = viewModel.appsWithApk.contains(app.id),
+                    isDownloading = progress != null,
+                    downloadProgress = progress ?: 0f,
+                    onBack = {
+                        vibrate()
+                        selectedAppId = null
+                    },
+                    onToggleFavorite = {
+                        vibrate()
+                        viewModel.toggleFavorite(app)
+                    },
+                    onInstall = { handleInstallClick(app) },
+                    onDeleteApk = { viewModel.deleteApk(app) }
+                )
+            } else if (selectedAppId != null && viewModel.isLoading) {
+                // Если ID задан, но данные еще грузятся - ждем
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            } else if (viewModel.isLoading && viewModel.appsFromCloud.isEmpty()) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             } else {
-                val app = viewModel.appsFromCloud.find { it.id == selectedAppId }
-                if (app != null) {
-                    val pkg = app.packageName
-                    val isInstalled = pkg?.let { viewModel.installedApps.containsKey(it) } ?: false
-                    val currentVersion = pkg?.let { viewModel.installedApps[it] } ?: 0
-                    val isUpdate = isInstalled && app.versionCode > currentVersion
-                    val progress = viewModel.downloadingProgress[app.id]
-
-                    AppDetailScreen(
-                        app = app,
-                        isFavorite = viewModel.favorites.contains(app.id.toString()),
-                        isInstalled = isInstalled,
-                        needsUpdate = isUpdate,
-                        hasApk = viewModel.appsWithApk.contains(app.id),
-                        isDownloading = progress != null,
-                        downloadProgress = progress ?: 0f,
-                        onBack = {
-                            vibrate()
-                            selectedAppId = null
-                        },
-                        onToggleFavorite = {
-                            vibrate()
-                            viewModel.toggleFavorite(app)
-                        },
-                        onInstall = { handleInstallClick(app) },
-                        onDeleteApk = { viewModel.deleteApk(app) }
-                    )
-                } else if (currentDestination == AppDestinations.HOME) {
+                if (currentDestination == AppDestinations.HOME) {
                     HomeScreen(
                         apps = viewModel.appsFromCloud,
                         onAppClick = { appItem ->

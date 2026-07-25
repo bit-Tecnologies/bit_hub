@@ -71,7 +71,7 @@ fun AppDetailScreen(
                         onClick = {
                             val appId = app.id
                             val shareText = if (appId != null) {
-                                "Посмотри ${app.title} в bit Hub! Открыть: https://bit-tecnologies.github.io/bit_hub/app?id=$appId"
+                                "Посмотри ${app.title} в bit Hub! Открыть: https://bit-tecnologies.pages.dev/app?id=$appId"
                             } else {
                                 "Скачай ${app.title} в bit Hub! Приложение от ${app.developer}"
                             }
