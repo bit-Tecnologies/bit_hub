@@ -26,6 +26,7 @@ import com.bit.bithub.components.SettingsSection
 import com.bit.bithub.components.ThemeSelectionDialog
 import com.bit.bithub.data.UpdateInfo
 import com.bit.bithub.ui.theme.ThemeMode
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,6 +37,7 @@ fun ProfileScreen(
     installedCount: Int,
     isCheckingUpdate: Boolean,
     updateInfo: UpdateInfo? = null,
+    windowWidthSizeClass: WindowWidthSizeClass = WindowWidthSizeClass.Compact,
     onCheckUpdateClick: () -> Unit,
     onClose: () -> Unit
 ) {
@@ -71,73 +73,80 @@ fun ProfileScreen(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(Modifier.height(16.dp))
-            Box(
-                modifier = Modifier.size(100.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center
+            Column(
+                modifier = Modifier
+                    .widthIn(max = 600.dp)
+                    .fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Icon(Icons.Default.AccountCircle, null, modifier = Modifier.size(70.dp))
-            }
-            Spacer(Modifier.height(16.dp))
-            Text(stringResource(R.string.user_name_placeholder), style = MaterialTheme.typography.headlineSmall)
-            
-            Spacer(Modifier.height(24.dp))
-            
-            SettingsSection(title = stringResource(R.string.section_management)) {
-                ListItem(
-                    headlineContent = { Text(stringResource(R.string.my_apps)) },
-                    trailingContent = { Text(stringResource(R.string.unit_pcs, installedCount)) },
-                    leadingContent = { Icon(Icons.AutoMirrored.Filled.List, null) }
-                )
-                
-                ListItem(
-                    headlineContent = { Text(stringResource(R.string.section_network_updates)) },
-                    supportingContent = { Text(stringResource(R.string.section_network_updates_desc)) },
-                    leadingContent = { Icon(Icons.Default.Update, null) },
-                    modifier = Modifier.clickable { onAutoUpdateSettingsClick() }
-                )
-            }
-
-            val context = LocalContext.current
-            SettingsSection(title = stringResource(R.string.section_settings)) {
-                SettingsItem(Icons.Default.Palette, stringResource(R.string.theme_settings)) { showThemeDialog = true }
-                SettingsItem(Icons.Default.Notifications, stringResource(R.string.notifications)) {
-                    val intent = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
-                            putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
-                        }
-                    } else {
-                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                            data = android.net.Uri.fromParts("package", context.packageName, null)
-                        }
-                    }
-                    context.startActivity(intent)
+                Spacer(Modifier.height(16.dp))
+                Box(
+                    modifier = Modifier.size(100.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Default.AccountCircle, null, modifier = Modifier.size(70.dp))
                 }
-            }
+                Spacer(Modifier.height(16.dp))
+                Text(stringResource(R.string.user_name_placeholder), style = MaterialTheme.typography.headlineSmall)
+                
+                Spacer(Modifier.height(24.dp))
+                
+                SettingsSection(title = stringResource(R.string.section_management)) {
+                    ListItem(
+                        headlineContent = { Text(stringResource(R.string.my_apps)) },
+                        trailingContent = { Text(stringResource(R.string.unit_pcs, installedCount)) },
+                        leadingContent = { Icon(Icons.AutoMirrored.Filled.List, null) }
+                    )
+                    
+                    ListItem(
+                        headlineContent = { Text(stringResource(R.string.section_network_updates)) },
+                        supportingContent = { Text(stringResource(R.string.section_network_updates_desc)) },
+                        leadingContent = { Icon(Icons.Default.Update, null) },
+                        modifier = Modifier.clickable { onAutoUpdateSettingsClick() }
+                    )
+                }
 
-            SettingsSection(title = stringResource(R.string.section_info)) {
-                ListItem(
-                    headlineContent = { Text(stringResource(R.string.app_version)) },
-                    trailingContent = { 
-                        if (isCheckingUpdate) {
-                            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                val context = LocalContext.current
+                SettingsSection(title = stringResource(R.string.section_settings)) {
+                    SettingsItem(Icons.Default.Palette, stringResource(R.string.theme_settings)) { showThemeDialog = true }
+                    SettingsItem(Icons.Default.Notifications, stringResource(R.string.notifications)) {
+                        val intent = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                            Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                                putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                            }
                         } else {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                if (updateInfo != null) {
-                                    Text(
-                                        stringResource(R.string.update_available),
-                                        color = MaterialTheme.colorScheme.primary,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        modifier = Modifier.padding(end = 8.dp)
-                                    )
-                                }
-                                Text(BuildConfig.VERSION_NAME)
+                            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                data = android.net.Uri.fromParts("package", context.packageName, null)
                             }
                         }
-                    },
-                    leadingContent = { Icon(Icons.Default.Info, null) },
-                    modifier = Modifier.clickable(enabled = !isCheckingUpdate) { onCheckUpdateClick() }
-                )
+                        context.startActivity(intent)
+                    }
+                }
+
+                SettingsSection(title = stringResource(R.string.section_info)) {
+                    ListItem(
+                        headlineContent = { Text(stringResource(R.string.app_version)) },
+                        trailingContent = { 
+                            if (isCheckingUpdate) {
+                                CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                            } else {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    if (updateInfo != null) {
+                                        Text(
+                                            stringResource(R.string.update_available),
+                                            color = MaterialTheme.colorScheme.primary,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            modifier = Modifier.padding(end = 8.dp)
+                                        )
+                                    }
+                                    Text(BuildConfig.VERSION_NAME)
+                                }
+                            }
+                        },
+                        leadingContent = { Icon(Icons.Default.Info, null) },
+                        modifier = Modifier.clickable(enabled = !isCheckingUpdate) { onCheckUpdateClick() }
+                    )
+                }
             }
         }
     }

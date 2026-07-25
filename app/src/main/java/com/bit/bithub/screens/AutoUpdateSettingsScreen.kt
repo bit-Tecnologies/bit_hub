@@ -50,10 +50,12 @@ fun AutoUpdateSettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // СЕКЦИЯ 1: КЛИЕНТ BIT HUB
-            SettingsCategoryHeader("Клиент bit Hub")
+            Column(modifier = Modifier.widthIn(max = 600.dp).fillMaxWidth()) {
+                // СЕКЦИЯ 1: КЛИЕНТ BIT HUB
+                SettingsCategoryHeader("Клиент bit Hub")
             
             ListItem(
                 headlineContent = { Text("Фоновая проверка") },
@@ -154,6 +156,7 @@ fun AutoUpdateSettingsScreen(
             }
         }
     }
+}
 }
 
 @Composable

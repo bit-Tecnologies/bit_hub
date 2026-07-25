@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import com.bit.bithub.components.*
 import com.bit.bithub.data.App
 import kotlinx.coroutines.launch
@@ -38,6 +39,7 @@ fun StoreScreen(
     isGamesTab: Boolean = false,
     error: String? = null,
     onRetry: () -> Unit = {},
+    windowWidthSizeClass: WindowWidthSizeClass = WindowWidthSizeClass.Compact
 ) {
     var searchQuery by remember { mutableStateOf(value = "") }
     val filteredApps = apps.filter { it.title.contains(searchQuery, ignoreCase = true) }
@@ -78,6 +80,7 @@ fun StoreScreen(
                     onAppClick = onAppClick,
                     onInstallClick = onInstallClick,
                     isGamesTab = isGamesTab,
+                    windowWidthSizeClass = windowWidthSizeClass,
                     onCategoryClick = {
                         scope.launch { snackbarHostState.showSnackbar("Фильтр по категориям скоро появится...") }
                     }
@@ -138,6 +141,7 @@ private fun StoreContent(
     onAppClick: (App) -> Unit,
     onInstallClick: (App) -> Unit,
     isGamesTab: Boolean,
+    windowWidthSizeClass: WindowWidthSizeClass,
     onCategoryClick: (String) -> Unit
 ) {
     LazyColumn(modifier = Modifier.fillMaxSize()) {
@@ -191,20 +195,52 @@ private fun StoreContent(
                 }
             }
 
-            items(filteredApps) { app ->
-                val pkg = app.packageName
-                val installedVersion = pkg?.let { installedApps[it] }
-                val needsUpdate = (installedVersion != null) && (app.versionCode > installedVersion)
+            if (windowWidthSizeClass == WindowWidthSizeClass.Compact) {
+                items(filteredApps) { app ->
+                    val pkg = app.packageName
+                    val installedVersion = pkg?.let { installedApps[it] }
+                    val needsUpdate = (installedVersion != null) && (app.versionCode > installedVersion)
 
-                AppListItem(
-                    app = app,
-                    isInstalled = installedVersion != null,
-                    needsUpdate = needsUpdate,
-                    hasApk = app.id in appsWithApk,
-                    downloadProgress = app.id?.let { downloadingIds[it] },
-                    onInstallClick = { onInstallClick(app) },
-                    onClick = { onAppClick(app) },
-                )
+                    AppListItem(
+                        app = app,
+                        isInstalled = installedVersion != null,
+                        needsUpdate = needsUpdate,
+                        hasApk = app.id in appsWithApk,
+                        downloadProgress = app.id?.let { downloadingIds[it] },
+                        onInstallClick = { onInstallClick(app) },
+                        onClick = { onAppClick(app) },
+                    )
+                }
+            } else {
+                // Сетка для планшетов
+                item {
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                        maxItemsInEachRow = if (windowWidthSizeClass == WindowWidthSizeClass.Expanded) 3 else 2,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        filteredApps.forEach { app ->
+                            val pkg = app.packageName
+                            val installedVersion = pkg?.let { installedApps[it] }
+                            val needsUpdate = (installedVersion != null) && (app.versionCode > installedVersion)
+                            
+                            Box(modifier = Modifier.weight(1f)) {
+                                FeaturedAppCard(
+                                    app = app,
+                                    onClick = { onAppClick(app) }
+                                )
+                            }
+                        }
+                        
+                        // Заполнители для выравнивания в последнем ряду
+                        val itemsInRow = if (windowWidthSizeClass == WindowWidthSizeClass.Expanded) 3 else 2
+                        val placeholders = (itemsInRow - (filteredApps.size % itemsInRow)) % itemsInRow
+                        repeat(placeholders) {
+                            Box(modifier = Modifier.weight(1f))
+                        }
+                    }
+                }
             }
         }
     }

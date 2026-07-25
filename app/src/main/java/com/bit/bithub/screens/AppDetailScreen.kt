@@ -23,6 +23,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import coil.compose.AsyncImage
 import com.bit.bithub.data.App
 import com.bit.bithub.components.AppStatItem
@@ -41,6 +42,7 @@ fun AppDetailScreen(
     hasApk: Boolean,
     isDownloading: Boolean,
     downloadProgress: Float,
+    windowWidthSizeClass: WindowWidthSizeClass = WindowWidthSizeClass.Compact,
     onBack: () -> Unit,
     onToggleFavorite: () -> Unit,
     onInstall: () -> Unit,
@@ -100,7 +102,7 @@ fun AppDetailScreen(
                                     showDeleteDialog = true
                                 },
                                 enabled = hasApk,
-                                leadingIcon = { Icon(Icons.Default.MoreVert, null) } // Can use a different icon if wanted
+                                leadingIcon = { Icon(Icons.Default.MoreVert, null) }
                             )
                         }
                     }
@@ -108,117 +110,73 @@ fun AppDetailScreen(
             )
         }
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-        ) {
-            // ... (rest of content)
+        val isWide = windowWidthSizeClass != WindowWidthSizeClass.Compact
+        
+        if (isWide) {
             Row(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(16.dp)
             ) {
-                AsyncImage(
-                    model = app.iconUrl,
-                    contentDescription = null,
+                // Левая колонка - основная инфо и кнопка
+                Column(
                     modifier = Modifier
-                        .size(88.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(defaultIconColor),
-                    contentScale = ContentScale.Crop
-                )
-                Spacer(Modifier.width(16.dp))
-                Column {
-                    Text(app.title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-                    Text(app.developer, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-                }
-            }
-
-            Surface(
-                modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth(),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Row(
-                    modifier = Modifier.padding(vertical = 16.dp).fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
+                        .weight(0.4f)
+                        .verticalScroll(rememberScrollState())
                 ) {
-                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                        AppStatItem("${app.rating} ★", "Рейтинг")
-                    }
-                    VerticalDivider(Modifier.height(32.dp), thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
-                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                        AppStatItem(app.formattedSize, "Размер")
-                    }
-                    VerticalDivider(Modifier.height(32.dp), thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
-                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                        AppStatItem(app.versionName, "Версия")
-                    }
+                    AppHeader(app)
+                    Spacer(Modifier.height(24.dp))
+                    AppStats(app)
+                    Spacer(Modifier.height(24.dp))
+                    
+                    val buttonText = getButtonText(needsUpdate, isInstalled, hasApk)
+                    DownloadButton(
+                        text = buttonText,
+                        progress = if (isDownloading) downloadProgress else null,
+                        onClick = onInstall,
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isInstalled || needsUpdate || hasApk
+                    )
+                }
+                
+                Spacer(Modifier.width(32.dp))
+                
+                // Правая колонка - описание и скриншоты
+                Column(
+                    modifier = Modifier
+                        .weight(0.6f)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    AppScreenshots(app)
+                    Spacer(Modifier.height(24.dp))
+                    AppDescription(app)
                 }
             }
-
-            Spacer(Modifier.height(24.dp))
-
-            val buttonText = when {
-                needsUpdate -> "Обновить"
-                isInstalled -> stringResource(R.string.btn_installed)
-                hasApk -> stringResource(R.string.btn_install)
-                else -> stringResource(R.string.btn_download)
-            }
-
-            DownloadButton(
-                text = buttonText,
-                progress = if (isDownloading) downloadProgress else null,
-                onClick = onInstall,
+        } else {
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                enabled = !isInstalled || needsUpdate || hasApk
-            )
-
-            Spacer(Modifier.height(24.dp))
-
-            val screenshots = app.screenshots
-            if (!screenshots.isNullOrEmpty()) {
-                Text(
-                    "Скриншоты",
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+                    .fillMaxSize()
+                    .padding(padding)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                AppHeader(app)
+                AppStats(app)
+                Spacer(Modifier.height(24.dp))
+                
+                val buttonText = getButtonText(needsUpdate, isInstalled, hasApk)
+                DownloadButton(
+                    text = buttonText,
+                    progress = if (isDownloading) downloadProgress else null,
+                    onClick = onInstall,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                    enabled = !isInstalled || needsUpdate || hasApk
                 )
-                LazyRow(
-                    contentPadding = PaddingValues(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(screenshots.size) { index ->
-                        AsyncImage(
-                            model = screenshots[index],
-                            contentDescription = null,
-                            modifier = Modifier
-                                .width(150.dp)
-                                .height(250.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(defaultIconColor.copy(alpha = 0.3f)),
-                            contentScale = ContentScale.Crop
-                        )
-                    }
-                }
+                
+                Spacer(Modifier.height(24.dp))
+                AppScreenshots(app)
+                AppDescription(app)
             }
-
-            Text(
-                "Описание",
-                modifier = Modifier.padding(horizontal = 16.dp),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                app.description,
-                modifier = Modifier.padding(16.dp),
-                style = MaterialTheme.typography.bodyMedium
-            )
         }
     }
 
@@ -243,5 +201,113 @@ fun AppDetailScreen(
                 }
             }
         )
+    }
+}
+
+@Composable
+private fun AppHeader(app: App) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        AsyncImage(
+            model = app.iconUrl,
+            contentDescription = null,
+            modifier = Modifier
+                .size(88.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(defaultIconColor),
+            contentScale = ContentScale.Crop
+        )
+        Spacer(Modifier.width(16.dp))
+        Column {
+            Text(app.title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+            Text(app.developer, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+        }
+    }
+}
+
+@Composable
+private fun AppStats(app: App) {
+    Surface(
+        modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(vertical = 16.dp).fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                AppStatItem("${app.rating} ★", "Рейтинг")
+            }
+            VerticalDivider(Modifier.height(32.dp), thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
+            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                AppStatItem(app.formattedSize, "Размер")
+            }
+            VerticalDivider(Modifier.height(32.dp), thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
+            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                AppStatItem(app.versionName, "Версия")
+            }
+        }
+    }
+}
+
+@Composable
+private fun AppScreenshots(app: App) {
+    val screenshots = app.screenshots
+    if (!screenshots.isNullOrEmpty()) {
+        Text(
+            "Скриншоты",
+            modifier = Modifier.padding(horizontal = 16.dp),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
+        )
+        LazyRow(
+            contentPadding = PaddingValues(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(screenshots.size) { index ->
+                AsyncImage(
+                    model = screenshots[index],
+                    contentDescription = null,
+                    modifier = Modifier
+                        .width(150.dp)
+                        .height(250.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(defaultIconColor.copy(alpha = 0.3f)),
+                    contentScale = ContentScale.Crop
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AppDescription(app: App) {
+    Column {
+        Text(
+            "Описание",
+            modifier = Modifier.padding(horizontal = 16.dp),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            app.description,
+            modifier = Modifier.padding(16.dp),
+            style = MaterialTheme.typography.bodyMedium
+        )
+    }
+}
+
+@Composable
+private fun getButtonText(needsUpdate: Boolean, isInstalled: Boolean, hasApk: Boolean): String {
+    return when {
+        needsUpdate -> "Обновить"
+        isInstalled -> stringResource(R.string.btn_installed)
+        hasApk -> stringResource(R.string.btn_install)
+        else -> stringResource(R.string.btn_download)
     }
 }

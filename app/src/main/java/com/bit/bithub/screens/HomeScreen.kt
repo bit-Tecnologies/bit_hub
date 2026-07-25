@@ -12,9 +12,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import com.bit.bithub.components.*
 import com.bit.bithub.data.App
 import com.bit.bithub.data.MockData
@@ -28,6 +30,7 @@ fun HomeScreen(
     onAppClick: (App) -> Unit,
     onSearchClick: () -> Unit,
     onProfileClick: () -> Unit,
+    windowWidthSizeClass: WindowWidthSizeClass = WindowWidthSizeClass.Compact
 ) {
     val featured = apps.take(3)
     val recommended = apps.asSequence().filter { it.category != "Игры" }.take(5).toList()
@@ -53,10 +56,14 @@ fun HomeScreen(
             )
         }
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(bottom = 24.dp)
-        ) {
+        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .widthIn(max = if (windowWidthSizeClass == WindowWidthSizeClass.Expanded) 1200.dp else Double.MAX_VALUE.dp)
+                    .align(Alignment.TopCenter),
+                contentPadding = PaddingValues(bottom = 24.dp)
+            ) {
             item {
                 val pagerState = rememberPagerState { featured.size }
                 HomeCarousel(featured, pagerState, onAppClick)
@@ -105,4 +112,5 @@ fun HomeScreen(
             }
         }
     }
+}
 }

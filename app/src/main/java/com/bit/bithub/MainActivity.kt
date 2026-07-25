@@ -18,7 +18,14 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteDefaults
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldDefaults
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
+import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -56,6 +63,7 @@ class MainActivity : ComponentActivity() {
 
     private var initialAppId by mutableStateOf<Long?>(null)
 
+    @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
@@ -64,6 +72,7 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         setContent {
+            val windowSizeClass = calculateWindowSizeClass(this)
             val currentTheme = SettingsManager.themeMode
             val isDarkTheme = if (currentTheme == ThemeMode.SYSTEM) isSystemInDarkTheme() else currentTheme == ThemeMode.DARK
 
@@ -80,7 +89,7 @@ class MainActivity : ComponentActivity() {
             }
 
             BitHubTheme(themeMode = currentTheme) {
-                BitHubApp(initialAppId = initialAppId)
+                BitHubApp(initialAppId = initialAppId, windowWidthSizeClass = windowSizeClass.widthSizeClass)
             }
         }
     }
@@ -128,7 +137,8 @@ class MainActivity : ComponentActivity() {
 fun BitHubApp(
     viewModel: MainViewModel = viewModel(),
     updateViewModel: UpdateViewModel = viewModel(),
-    initialAppId: Long? = null
+    initialAppId: Long? = null,
+    windowWidthSizeClass: WindowWidthSizeClass = WindowWidthSizeClass.Compact
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -307,13 +317,29 @@ fun BitHubApp(
     }
 
     Box(Modifier.fillMaxSize()) {
+        val adaptiveInfo = currentWindowAdaptiveInfo()
+        val navSuiteType = NavigationSuiteScaffoldDefaults.calculateFromAdaptiveInfo(adaptiveInfo)
+        
+        // Скрываем навигацию на Compact экранах при просмотре деталей
+        val isDetailsOpen = selectedAppId != null
+        val shouldShowNav = !isDetailsOpen || windowWidthSizeClass != WindowWidthSizeClass.Compact
+
         NavigationSuiteScaffold(
+            layoutType = if (shouldShowNav) navSuiteType else NavigationSuiteType.None,
             navigationSuiteItems = {
                 AppDestinations.entries.forEach { dest ->
                     item(
                         icon = { Icon(dest.icon, stringResource(dest.labelRes), modifier = Modifier.size(24.dp)) },
-                        label = { Text(text = stringResource(dest.labelRes), maxLines = 1, overflow = TextOverflow.Ellipsis, fontSize = 11.sp) },
-                        selected = dest == currentDestination && selectedAppId == null,
+                        label = { 
+                            Text(
+                                text = stringResource(dest.labelRes),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                style = MaterialTheme.typography.labelMedium // Используем стандартный стиль для лучшего выравнивания
+                            ) 
+                        },
+                        alwaysShowLabel = true, // Гарантируем стабильное пространство для текста
+                        selected = dest == currentDestination,
                         onClick = {
                             if (currentDestination != dest || selectedAppId != null) {
                                 vibrate()
@@ -323,7 +349,12 @@ fun BitHubApp(
                         }
                     )
                 }
-            }
+            },
+            containerColor = MaterialTheme.colorScheme.background,
+            navigationSuiteColors = NavigationSuiteDefaults.colors(
+                navigationBarContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                navigationRailContainerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            )
         ) {
             val app = viewModel.appsFromCloud.find { it.id == selectedAppId }
             
@@ -342,6 +373,7 @@ fun BitHubApp(
                     hasApk = viewModel.appsWithApk.contains(app.id),
                     isDownloading = progress != null,
                     downloadProgress = progress ?: 0f,
+                    windowWidthSizeClass = windowWidthSizeClass,
                     onBack = {
                         vibrate()
                         selectedAppId = null
@@ -367,6 +399,7 @@ fun BitHubApp(
                     HomeScreen(
                         apps = viewModel.appsFromCloud,
                         categories = viewModel.categories,
+                        windowWidthSizeClass = windowWidthSizeClass,
                         onAppClick = { appItem ->
                             vibrate()
                             selectedAppId = appItem.id
@@ -392,6 +425,7 @@ fun BitHubApp(
                             viewModel.categories.filter { it != "Игры" && it != "Games" }
                         },
                         isGamesTab = currentDestination == AppDestinations.GAMES,
+                        windowWidthSizeClass = windowWidthSizeClass,
                         onAppClick = { appItem ->
                             vibrate()
                             selectedAppId = appItem.id
@@ -425,7 +459,11 @@ fun BitHubApp(
                 onDismissRequest = { showProfileSheet = false },
                 sheetState = profileSheetState,
                 dragHandle = { if (!showAutoUpdateSettings) BottomSheetDefaults.DragHandle() },
-                modifier = Modifier.fillMaxSize()
+                modifier = if (windowWidthSizeClass != WindowWidthSizeClass.Compact) {
+                    Modifier.widthIn(max = 600.dp).fillMaxWidth()
+                } else {
+                    Modifier.fillMaxSize()
+                }
             ) {
                 if (showAutoUpdateSettings) {
                     AutoUpdateSettingsScreen(
@@ -454,6 +492,7 @@ fun BitHubApp(
                         installedCount = viewModel.installedApps.size,
                         isCheckingUpdate = updateViewModel.isChecking,
                         updateInfo = updateViewModel.updateInfo,
+                        windowWidthSizeClass = windowWidthSizeClass,
                         onCheckUpdateClick = {
                             updateViewModel.checkForUpdates(manual = true)
                         },
