@@ -36,9 +36,6 @@ data class App(
 
     val sizeBytes: Long?
         get() = androidRelease?.sizeBytes
-
-    val formattedSize: String
-        get() = formatSizeBytes(sizeBytes)
 }
 
 @Serializable
@@ -54,14 +51,4 @@ data class AppRelease(
     val changelog: String? = null,
     @SerialName("created_at") val createdAt: String? = null
 )
-
-fun formatSizeBytes(bytes: Long?): String {
-    if (bytes == null || bytes <= 0) return ""
-    return when {
-        bytes < 1024 -> "$bytes B"
-        bytes < 1_048_576 -> "${bytes / 1024} KB"
-        bytes < 1_073_741_824 -> "${"%.1f".format(bytes / 1_048_576.0)} MB"
-        else -> "${"%.1f".format(bytes / 1_073_741_824.0)} GB"
-    }
-}
 

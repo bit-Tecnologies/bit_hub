@@ -54,7 +54,7 @@ import com.bit.bithub.ui.theme.BitHubTheme
 import com.bit.bithub.ui.theme.ThemeMode
 import com.bit.bithub.util.UpdateInstaller
 import com.bit.bithub.util.isWifiConnected
-import com.bit.bithub.settings.SettingsManager
+import com.bit.bithub.util.vibrate
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
@@ -74,7 +74,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val windowSizeClass = calculateWindowSizeClass(this)
-            val currentTheme = SettingsManager.themeMode
+            val settingsRepository = remember { SettingsRepository(this) }
+            val currentTheme by settingsRepository.themeMode.collectAsState(initial = ThemeMode.SYSTEM)
+            
             val isDarkTheme = if (currentTheme == ThemeMode.SYSTEM) isSystemInDarkTheme() else currentTheme == ThemeMode.DARK
 
             LaunchedEffect(isDarkTheme) {
@@ -102,30 +104,27 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleIntent(intent: Intent?) {
-        android.util.Log.d("BitHubIntent", "Handling intent: ${intent?.data}")
-        if (intent?.action == Intent.ACTION_VIEW) {
-            val data = intent.data ?: return
+        val data = intent?.data ?: return
+        android.util.Log.d("BitHubIntent", "Handling intent: $data")
+        
+        val appId = when {
+            // bithub://app?id=...
+            data.scheme == "bithub" && data.host == "app" -> data.getQueryParameter("id")
             
-            // Обработка bithub://app?id=...
-            if (data.scheme == "bithub" && data.host == "app") {
-                val idStr = data.getQueryParameter("id")
-                initialAppId = idStr?.toLongOrNull()
-            }
-            // Обработка https://bit-tecnologies.github.io/bit_hub/app?id=...
-            else if ((data.scheme == "http" || data.scheme == "https") && 
-                data.host == "bit-tecnologies.github.io" && 
-                data.path?.startsWith("/bit_hub/app") == true) {
-                val idStr = data.getQueryParameter("id")
-                initialAppId = idStr?.toLongOrNull()
-            }
-            // Обработка https://bit-tecnologies.pages.dev/app?id=...
-            else if ((data.scheme == "http" || data.scheme == "https") && 
-                data.host == "bit-tecnologies.pages.dev" && 
-                data.path?.startsWith("/app") == true) {
-                val idStr = data.getQueryParameter("id")
-                initialAppId = idStr?.toLongOrNull()
-            }
+            // https://bit-tecnologies.github.io/bit_hub/app?id=...
+            (data.scheme == "http" || data.scheme == "https") && 
+            data.host == "bit-tecnologies.github.io" && 
+            data.path?.startsWith("/bit_hub/app") == true -> data.getQueryParameter("id")
+            
+            // https://bit-tecnologies.pages.dev/app?id=...
+            (data.scheme == "http" || data.scheme == "https") && 
+            data.host == "bit-tecnologies.pages.dev" && 
+            data.path?.startsWith("/app") == true -> data.getQueryParameter("id")
+            
+            else -> null
         }
+        
+        initialAppId = appId?.toLongOrNull()
     }
 
     override fun onDestroy() {
@@ -150,6 +149,8 @@ fun BitHubApp(
 
     var currentDestination by rememberSaveable { mutableStateOf(value = AppDestinations.HOME) }
     var selectedAppId by rememberSaveable { mutableStateOf<Long?>(value = null) }
+
+    val appDownloadWifiOnly by settingsRepository.appDownloadWifiOnly.collectAsState(initial = false)
 
     LaunchedEffect(initialAppId) {
         if (initialAppId != null) {
@@ -193,27 +194,6 @@ fun BitHubApp(
         }
     }
 
-    fun vibrate() {
-        try {
-            val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                val vm = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager
-                vm?.defaultVibrator
-            } else {
-                @Suppress("DEPRECATION")
-                context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
-            }
-
-            vibrator?.let { v ->
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    v.vibrate(VibrationEffect.createOneShot(15, VibrationEffect.DEFAULT_AMPLITUDE))
-                } else {
-                    @Suppress("DEPRECATION")
-                    v.vibrate(15)
-                }
-            }
-        } catch (_: Exception) { }
-    }
-
     LaunchedEffect(Unit) {
         viewModel.loadData()
         updateViewModel.checkForUpdates()
@@ -249,7 +229,7 @@ fun BitHubApp(
     }
 
     fun handleInstallClick(app: App) {
-        vibrate()
+        context.vibrate()
         val appId = app.id ?: return
 
         if (viewModel.downloadingProgress.containsKey(appId)) {
@@ -273,7 +253,7 @@ fun BitHubApp(
             }
         }
 
-        if (SettingsManager.downloadWifiOnly && !isWifiConnected(context)) {
+        if (appDownloadWifiOnly && !isWifiConnected(context)) {
             appToConfirmDownload = app
             return
         }
@@ -304,7 +284,7 @@ fun BitHubApp(
                 duration = SnackbarDuration.Long
             )
             if (result == SnackbarResult.ActionPerformed) {
-                vibrate()
+                context.vibrate()
                 showProfileSheet = true
             }
         }
@@ -352,7 +332,7 @@ fun BitHubApp(
                                 alwaysShowLabel = true,
                                 onClick = {
                                     if (currentDestination != dest || selectedAppId != null) {
-                                        vibrate()
+                                        context.vibrate()
                                         currentDestination = dest
                                         selectedAppId = null
                                     }
@@ -373,7 +353,7 @@ fun BitHubApp(
                                 alwaysShowLabel = true,
                                 onClick = {
                                     if (currentDestination != dest || selectedAppId != null) {
-                                        vibrate()
+                                        context.vibrate()
                                         currentDestination = dest
                                         selectedAppId = null
                                     }
@@ -403,11 +383,11 @@ fun BitHubApp(
                     downloadProgress = progress ?: 0f,
                     windowWidthSizeClass = windowWidthSizeClass,
                     onBack = {
-                        vibrate()
+                        context.vibrate()
                         selectedAppId = null
                     },
                     onToggleFavorite = {
-                        vibrate()
+                        context.vibrate()
                         viewModel.toggleFavorite(app)
                     },
                     onInstall = { handleInstallClick(app) },
@@ -429,14 +409,14 @@ fun BitHubApp(
                         categories = viewModel.categories,
                         windowWidthSizeClass = windowWidthSizeClass,
                         onAppClick = { appItem ->
-                            vibrate()
+                            context.vibrate()
                             selectedAppId = appItem.id
                         },
                         onSearchClick = {
                             currentDestination = AppDestinations.APPS
                         },
                         onProfileClick = {
-                            vibrate()
+                            context.vibrate()
                             showProfileSheet = true
                         }
                     )
@@ -455,7 +435,7 @@ fun BitHubApp(
                         isGamesTab = currentDestination == AppDestinations.GAMES,
                         windowWidthSizeClass = windowWidthSizeClass,
                         onAppClick = { appItem ->
-                            vibrate()
+                            context.vibrate()
                             selectedAppId = appItem.id
                         },
                         onInstallClick = { appItem -> handleInstallClick(appItem) },
@@ -463,7 +443,7 @@ fun BitHubApp(
                         appsWithApk = viewModel.appsWithApk.toSet(),
                         downloadingIds = viewModel.downloadingProgress,
                         onProfileClick = {
-                            vibrate()
+                            context.vibrate()
                             showProfileSheet = true
                         },
                         isRefreshing = viewModel.isLoading,
@@ -507,15 +487,15 @@ fun BitHubApp(
                         onAppDownloadWifiOnlyChange = {
                             scope.launch {
                                 settingsRepository.setAppDownloadWifiOnly(it)
-                                SettingsManager.downloadWifiOnly = it
                             }
                         },
                         onBack = { showAutoUpdateSettings = false }
                     )
                 } else {
+                    val currentThemeMode by settingsRepository.themeMode.collectAsState(initial = ThemeMode.SYSTEM)
                     ProfileScreen(
-                        currentThemeMode = SettingsManager.themeMode,
-                        onThemeChange = { SettingsManager.themeMode = it },
+                        currentThemeMode = currentThemeMode,
+                        onThemeChange = { scope.launch { settingsRepository.setThemeMode(it) } },
                         onAutoUpdateSettingsClick = { showAutoUpdateSettings = true },
                         installedCount = viewModel.installedApps.size,
                         isCheckingUpdate = updateViewModel.isChecking,

@@ -35,32 +35,17 @@ class UpdateViewModel(application: Application) : AndroidViewModel(application) 
 
     init {
         viewModelScope.launch {
-            settingsRepository.backgroundUpdateCheck.collect { enabled ->
+            kotlinx.coroutines.flow.combine(
+                settingsRepository.backgroundUpdateCheck,
+                settingsRepository.updateInterval,
+                settingsRepository.networkType
+            ) { enabled, interval, network ->
+                Triple(enabled, interval, network)
+            }.collect { (enabled, interval, network) ->
                 if (enabled) {
-                    val interval = settingsRepository.updateInterval.first()
-                    val network = settingsRepository.networkType.first()
                     UpdateWorker.schedule(getApplication(), interval.hours, network)
                 } else {
                     UpdateWorker.cancel(getApplication())
-                }
-            }
-        }
-        
-        // Listen for interval and network changes too
-        viewModelScope.launch {
-            settingsRepository.updateInterval.collect { interval ->
-                if (settingsRepository.backgroundUpdateCheck.first()) {
-                    val network = settingsRepository.networkType.first()
-                    UpdateWorker.schedule(getApplication(), interval.hours, network)
-                }
-            }
-        }
-
-        viewModelScope.launch {
-            settingsRepository.networkType.collect { network ->
-                if (settingsRepository.backgroundUpdateCheck.first()) {
-                    val interval = settingsRepository.updateInterval.first()
-                    UpdateWorker.schedule(getApplication(), interval.hours, network)
                 }
             }
         }

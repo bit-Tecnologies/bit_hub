@@ -29,6 +29,7 @@ import com.bit.bithub.data.App
 import com.bit.bithub.components.AppStatItem
 import com.bit.bithub.components.DownloadButton
 import com.bit.bithub.R
+import com.bit.bithub.util.formatFileSize
 
 private val defaultIconColor = Color(0xFF2C6CFF)
 
@@ -245,7 +246,8 @@ private fun AppStats(app: App) {
             }
             VerticalDivider(Modifier.height(32.dp), thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
             Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                AppStatItem(app.formattedSize, "Размер")
+                val context = LocalContext.current
+                AppStatItem(app.sizeBytes.formatFileSize(context), "Размер")
             }
             VerticalDivider(Modifier.height(32.dp), thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
             Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
