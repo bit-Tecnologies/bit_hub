@@ -17,11 +17,12 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material3.*
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteDefaults
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldDefaults
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldLayout
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
@@ -324,37 +325,64 @@ fun BitHubApp(
         val isDetailsOpen = selectedAppId != null
         val shouldShowNav = !isDetailsOpen || windowWidthSizeClass != WindowWidthSizeClass.Compact
 
-        NavigationSuiteScaffold(
-            layoutType = if (shouldShowNav) navSuiteType else NavigationSuiteType.None,
-            navigationSuiteItems = {
-                AppDestinations.entries.forEach { dest ->
-                    item(
-                        icon = { Icon(dest.icon, stringResource(dest.labelRes), modifier = Modifier.size(24.dp)) },
-                        label = { 
-                            Text(
-                                text = stringResource(dest.labelRes),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                style = MaterialTheme.typography.labelMedium // Используем стандартный стиль для лучшего выравнивания
-                            ) 
-                        },
-                        alwaysShowLabel = true, // Гарантируем стабильное пространство для текста
-                        selected = dest == currentDestination,
-                        onClick = {
-                            if (currentDestination != dest || selectedAppId != null) {
-                                vibrate()
-                                currentDestination = dest
-                                selectedAppId = null
-                            }
+        val layoutType = if (shouldShowNav) navSuiteType else NavigationSuiteType.None
+
+        NavigationSuiteScaffoldLayout(
+            navigationSuite = {
+                if (layoutType == NavigationSuiteType.NavigationRail) {
+                    NavigationRail(
+                        modifier = Modifier.fillMaxHeight(),
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                        header = {
+                            Spacer(Modifier.height(44.dp)) // Material 3 Expressive top margin
+                            Icon(
+                                imageVector = Icons.Default.Apps,
+                                contentDescription = null,
+                                modifier = Modifier.size(32.dp).padding(4.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(Modifier.height(36.dp))
                         }
-                    )
+                    ) {
+                        AppDestinations.entries.forEach { dest ->
+                            NavigationRailItem(
+                                icon = { Icon(dest.icon, stringResource(dest.labelRes)) },
+                                label = { Text(stringResource(dest.labelRes), style = MaterialTheme.typography.labelMedium) },
+                                selected = dest == currentDestination,
+                                alwaysShowLabel = true,
+                                onClick = {
+                                    if (currentDestination != dest || selectedAppId != null) {
+                                        vibrate()
+                                        currentDestination = dest
+                                        selectedAppId = null
+                                    }
+                                }
+                            )
+                            Spacer(Modifier.height(12.dp))
+                        }
+                    }
+                } else if (layoutType != NavigationSuiteType.None) {
+                    NavigationBar(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    ) {
+                        AppDestinations.entries.forEach { dest ->
+                            NavigationBarItem(
+                                icon = { Icon(dest.icon, stringResource(dest.labelRes)) },
+                                label = { Text(stringResource(dest.labelRes), style = MaterialTheme.typography.labelMedium) },
+                                selected = dest == currentDestination,
+                                alwaysShowLabel = true,
+                                onClick = {
+                                    if (currentDestination != dest || selectedAppId != null) {
+                                        vibrate()
+                                        currentDestination = dest
+                                        selectedAppId = null
+                                    }
+                                }
+                            )
+                        }
+                    }
                 }
-            },
-            containerColor = MaterialTheme.colorScheme.background,
-            navigationSuiteColors = NavigationSuiteDefaults.colors(
-                navigationBarContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                navigationRailContainerColor = MaterialTheme.colorScheme.surfaceContainerLow
-            )
+            }
         ) {
             val app = viewModel.appsFromCloud.find { it.id == selectedAppId }
             
