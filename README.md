@@ -10,6 +10,12 @@
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="License">
 </p>
 
+<p align="center">
+  <a href="https://github.com/bit-Tecnologies/bit_hub/releases/latest">
+    <img src="https://img.shields.io/badge/Get_it_on-GitHub_Store-1A1A1A?style=for-the-badge&logo=github&logoColor=white" alt="Get it on GitHub Store">
+  </a>
+</p>
+
 ---
 
 ## 🌟 Обзор
