@@ -177,6 +177,10 @@ fun BitHubApp(
         }
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
+                val packageName = intent.data?.schemeSpecificPart
+                if (intent.action == Intent.ACTION_PACKAGE_ADDED || intent.action == Intent.ACTION_PACKAGE_REPLACED) {
+                    packageName?.let { viewModel.onPackageInstalled(it) }
+                }
                 viewModel.refreshInstalledApps()
             }
         }
@@ -195,6 +199,11 @@ fun BitHubApp(
     }
 
     LaunchedEffect(Unit) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
         viewModel.loadData()
         updateViewModel.checkForUpdates()
 
@@ -391,7 +400,9 @@ fun BitHubApp(
                         viewModel.toggleFavorite(app)
                     },
                     onInstall = { handleInstallClick(app) },
-                    onDeleteApk = { viewModel.deleteApk(app) }
+                    onDeleteApk = { viewModel.deleteApk(app) },
+                    onOpen = { pkg?.let { viewModel.openApp(context, it) } },
+                    onUninstall = { pkg?.let { viewModel.uninstallApp(context, it) } }
                 )
             } else if (selectedAppId != null && viewModel.isLoading) {
                 // Если ID задан, но данные еще грузятся - ждем
@@ -455,6 +466,21 @@ fun BitHubApp(
             }
         }
 
+        // Фиксированный баннер
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = if (layoutType == NavigationSuiteType.NavigationBar) 80.dp else 16.dp)
+                .widthIn(max = 600.dp)
+        ) {
+            com.bit.bithub.components.UpdateBanner(
+                updateInfo = updateViewModel.updateInfo,
+                downloadProgress = updateViewModel.downloadProgress,
+                isUpdateDownloaded = updateViewModel.isUpdateDownloaded,
+                onUpdateClick = { updateViewModel.checkForUpdates(manual = true) }
+            )
+        }
+
         if (showProfileSheet) {
             var showAutoUpdateSettings by remember { mutableStateOf(false) }
             val backgroundCheck by settingsRepository.backgroundUpdateCheck.collectAsState(initial = true)
@@ -500,6 +526,8 @@ fun BitHubApp(
                         installedCount = viewModel.installedApps.size,
                         isCheckingUpdate = updateViewModel.isChecking,
                         updateInfo = updateViewModel.updateInfo,
+                        downloadProgress = updateViewModel.downloadProgress,
+                        isUpdateDownloaded = updateViewModel.isUpdateDownloaded,
                         windowWidthSizeClass = windowWidthSizeClass,
                         onCheckUpdateClick = {
                             updateViewModel.checkForUpdates(manual = true)

@@ -48,6 +48,8 @@ fun AppDetailScreen(
     onToggleFavorite: () -> Unit,
     onInstall: () -> Unit,
     onDeleteApk: () -> Unit,
+    onOpen: () -> Unit,
+    onUninstall: () -> Unit,
 ) {
     var showMenu by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -132,13 +134,35 @@ fun AppDetailScreen(
                     Spacer(Modifier.height(24.dp))
                     
                     val buttonText = getButtonText(needsUpdate, isInstalled, hasApk)
-                    DownloadButton(
-                        text = buttonText,
-                        progress = if (isDownloading) downloadProgress else null,
-                        onClick = onInstall,
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = !isInstalled || needsUpdate || hasApk
-                    )
+                    
+                    if (isInstalled && !needsUpdate) {
+                        Row(modifier = Modifier.fillMaxWidth()) {
+                            Button(
+                                onClick = onOpen,
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text("Открыть")
+                            }
+                            Spacer(Modifier.width(8.dp))
+                            Button(
+                                onClick = onUninstall,
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                            ) {
+                                Text("Удалить")
+                            }
+                        }
+                    } else {
+                        DownloadButton(
+                            text = buttonText,
+                            progress = if (isDownloading) downloadProgress else null,
+                            onClick = onInstall,
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = !isInstalled || needsUpdate || hasApk
+                        )
+                    }
                 }
                 
                 Spacer(Modifier.width(32.dp))
@@ -166,13 +190,35 @@ fun AppDetailScreen(
                 Spacer(Modifier.height(24.dp))
                 
                 val buttonText = getButtonText(needsUpdate, isInstalled, hasApk)
-                DownloadButton(
-                    text = buttonText,
-                    progress = if (isDownloading) downloadProgress else null,
-                    onClick = onInstall,
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                    enabled = !isInstalled || needsUpdate || hasApk
-                )
+                
+                if (isInstalled && !needsUpdate) {
+                    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                        Button(
+                            onClick = onOpen,
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text("Открыть")
+                        }
+                        Spacer(Modifier.width(8.dp))
+                        Button(
+                            onClick = onUninstall,
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                        ) {
+                            Text("Удалить")
+                        }
+                    }
+                } else {
+                    DownloadButton(
+                        text = buttonText,
+                        progress = if (isDownloading) downloadProgress else null,
+                        onClick = onInstall,
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                        enabled = !isInstalled || needsUpdate || hasApk
+                    )
+                }
                 
                 Spacer(Modifier.height(24.dp))
                 AppScreenshots(app)

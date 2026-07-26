@@ -37,6 +37,8 @@ fun ProfileScreen(
     installedCount: Int,
     isCheckingUpdate: Boolean,
     updateInfo: UpdateInfo? = null,
+    downloadProgress: Float? = null,
+    isUpdateDownloaded: Boolean = false,
     windowWidthSizeClass: WindowWidthSizeClass = WindowWidthSizeClass.Compact,
     onCheckUpdateClick: () -> Unit,
     onClose: () -> Unit
@@ -124,16 +126,33 @@ fun ProfileScreen(
                 }
 
                 SettingsSection(title = stringResource(R.string.section_info)) {
+                    val progress = downloadProgress
                     ListItem(
                         headlineContent = { Text(stringResource(R.string.app_version)) },
+                        supportingContent = {
+                            if (progress != null) {
+                                Column(modifier = Modifier.padding(top = 8.dp)) {
+                                    LinearProgressIndicator(
+                                        progress = { progress },
+                                        modifier = Modifier.fillMaxWidth().height(8.dp).clip(CircleShape),
+                                        strokeCap = androidx.compose.ui.graphics.StrokeCap.Round
+                                    )
+                                    Text(
+                                        text = "Загрузка обновления: ${(progress * 100).toInt()}%",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        modifier = Modifier.padding(top = 4.dp)
+                                    )
+                                }
+                            }
+                        },
                         trailingContent = { 
                             if (isCheckingUpdate) {
                                 CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                             } else {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    if (updateInfo != null) {
+                                    if (updateInfo != null && progress == null) {
                                         Text(
-                                            stringResource(R.string.update_available),
+                                            if (isUpdateDownloaded) "Готово к установке" else stringResource(R.string.update_available),
                                             color = MaterialTheme.colorScheme.primary,
                                             style = MaterialTheme.typography.bodySmall,
                                             modifier = Modifier.padding(end = 8.dp)
@@ -144,7 +163,7 @@ fun ProfileScreen(
                             }
                         },
                         leadingContent = { Icon(Icons.Default.Info, null) },
-                        modifier = Modifier.clickable(enabled = !isCheckingUpdate) { onCheckUpdateClick() }
+                        modifier = Modifier.clickable(enabled = !isCheckingUpdate && progress == null) { onCheckUpdateClick() }
                     )
                 }
             }

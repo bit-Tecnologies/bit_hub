@@ -33,6 +33,14 @@ class UpdateViewModel(application: Application) : AndroidViewModel(application) 
     var showNoUpdateMessage by mutableStateOf(value = false)
         private set
 
+    var downloadProgress by mutableStateOf<Float?>(null)
+        private set
+
+    var isUpdateDownloaded by mutableStateOf(false)
+        private set
+
+    private var currentDownloadId: Long? = null
+
     init {
         viewModelScope.launch {
             kotlinx.coroutines.flow.combine(
@@ -59,6 +67,15 @@ class UpdateViewModel(application: Application) : AndroidViewModel(application) 
             
             if (info != null) {
                 updateInfo = info
+                // Проверка, скачано ли уже
+                val cachedFile = updateRepository.getCachedUpdateFile(info.fileName)
+                if (cachedFile != null) {
+                    val fileVersion = UpdateInstaller.getApkVersionCode(getApplication(), cachedFile)
+                    isUpdateDownloaded = fileVersion != null && fileVersion >= (info.versionCode ?: 0)
+                } else {
+                    isUpdateDownloaded = false
+                }
+                
                 if (manual) {
                     isUpdatePromptVisible = true
                 } else {
@@ -94,7 +111,8 @@ class UpdateViewModel(application: Application) : AndroidViewModel(application) 
             if (fileVersion != null && fileVersion >= (info.versionCode ?: 0)) {
                 Log.d("bit_hub_updater", "[Installer] Found valid cached APK: ${info.fileName}")
                 UpdateInstaller.installApk(context, cachedFile)
-                updateInfo = null
+                // Не обнуляем инфо, чтобы показать статус "Установить" если прервано
+                isUpdateDownloaded = true
                 return
             } else {
                 Log.d("bit_hub_updater", "[Installer] Cached APK is invalid or old, deleting: ${info.fileName}")
@@ -114,9 +132,49 @@ class UpdateViewModel(application: Application) : AndroidViewModel(application) 
             .setAllowedOverRoaming(true)
 
         val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-        downloadManager.enqueue(request)
+        val id = downloadManager.enqueue(request)
+        currentDownloadId = id
         
         Log.d("bit_hub_updater", "[Installer] Download started for ${info.versionName}")
-        updateInfo = null
+        observeDownloadProgress(context, id, info)
+        isUpdatePromptVisible = false
+    }
+
+    private fun observeDownloadProgress(context: Context, downloadId: Long, info: UpdateInfo) {
+        viewModelScope.launch {
+            val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+            var downloading = true
+            while (downloading) {
+                val query = DownloadManager.Query().setFilterById(downloadId)
+                val cursor = dm.query(query)
+                if (cursor != null && cursor.moveToFirst()) {
+                    val status = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
+                    when (status) {
+                        DownloadManager.STATUS_SUCCESSFUL -> {
+                            downloadProgress = null
+                            downloading = false
+                            isUpdateDownloaded = true
+                            val destinationFile = File(context.externalCacheDir, info.fileName)
+                            UpdateInstaller.installApk(context, destinationFile)
+                            currentDownloadId = null
+                        }
+                        DownloadManager.STATUS_FAILED -> {
+                            downloadProgress = null
+                            downloading = false
+                            currentDownloadId = null
+                        }
+                        DownloadManager.STATUS_RUNNING, DownloadManager.STATUS_PENDING -> {
+                            val total = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES))
+                            val downloaded = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR))
+                            if (total > 0) {
+                                downloadProgress = downloaded.toFloat() / total.toFloat()
+                            }
+                        }
+                    }
+                }
+                cursor?.close()
+                if (downloading) kotlinx.coroutines.delay(500)
+            }
+        }
     }
 }

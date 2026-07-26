@@ -14,10 +14,25 @@ class BitHubApplication : Application() {
     
     lateinit var supabase: SupabaseClient
 
+    companion object {
+        const val INSTALL_CHANNEL_ID = "INSTALL_CHANNEL"
+        var isAppInForeground = false
+            private set
+    }
+
     override fun onCreate() {
         super.onCreate()
         initSupabase()
         createNotificationChannels()
+        registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
+            override fun onActivityResumed(activity: android.app.Activity) { isAppInForeground = true }
+            override fun onActivityPaused(activity: android.app.Activity) { isAppInForeground = false }
+            override fun onActivityCreated(activity: android.app.Activity, savedInstanceState: android.os.Bundle?) {}
+            override fun onActivityStarted(activity: android.app.Activity) {}
+            override fun onActivityStopped(activity: android.app.Activity) {}
+            override fun onActivitySaveInstanceState(activity: android.app.Activity, outState: android.os.Bundle) {}
+            override fun onActivityDestroyed(activity: android.app.Activity) {}
+        })
     }
 
     @OptIn(SupabaseInternal::class)
@@ -56,9 +71,5 @@ class BitHubApplication : Application() {
 
             notificationManager.createNotificationChannels(listOf(installChannel, updatesChannel))
         }
-    }
-
-    companion object {
-        const val INSTALL_CHANNEL_ID = "INSTALL_CHANNEL"
     }
 }

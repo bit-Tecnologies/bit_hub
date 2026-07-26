@@ -263,6 +263,40 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun onPackageInstalled(packageName: String) {
+        viewModelScope.launch(Dispatchers.Default) {
+            val app = appsFromCloud.find { it.packageName == packageName }
+            if (app != null) {
+                withContext(Dispatchers.Main) {
+                    deleteApk(app)
+                }
+            }
+        }
+    }
+
+    fun openApp(context: Context, packageName: String) {
+        try {
+            val intent = context.packageManager.getLaunchIntentForPackage(packageName)
+            if (intent != null) {
+                context.startActivity(intent)
+            }
+        } catch (e: Exception) {
+            Log.e("MainViewModel", "Failed to open app: ${e.message}")
+        }
+    }
+
+    fun uninstallApp(context: Context, packageName: String) {
+        try {
+            val intent = android.content.Intent(android.content.Intent.ACTION_DELETE).apply {
+                data = android.net.Uri.parse("package:$packageName")
+                flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            Log.e("MainViewModel", "Failed to uninstall app: ${e.message}")
+        }
+    }
+
     fun deleteApk(app: App) {
         val file = getApkFile(app.title)
         if (file.exists()) {
