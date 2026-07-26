@@ -12,7 +12,7 @@
 
 <p align="center">
   <a href="https://github.com/bit-Tecnologies/bit_hub/releases/latest">
-    <img src="https://img.shields.io/badge/Get_it_on-GitHub_Store-1A1A1A?style=for-the-badge&logo=github&logoColor=white" alt="Get it on GitHub Store">
+    <img src="assets/readme/github-store-badge.svg" alt="Get it on GitHub Store" height="56">
   </a>
 </p>
 
