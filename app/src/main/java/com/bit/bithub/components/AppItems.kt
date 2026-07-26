@@ -1,5 +1,6 @@
 package com.bit.bithub.components
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -13,13 +14,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.bit.bithub.R
 import com.bit.bithub.data.App
@@ -28,8 +29,12 @@ private val defaultIconColor = Color(0xFF2C6CFF)
 
 @Composable
 fun NewsCard(title: String, description: String, imageUrl: String, onClick: () -> Unit) {
-    Card(
-        modifier = Modifier.width(280.dp).height(180.dp).clickable(onClick = onClick),
+    ElevatedCard(
+        modifier = Modifier
+            .width(280.dp)
+            .height(180.dp)
+            .clickable(onClick = onClick)
+            .animateContentSize(),
         shape = RoundedCornerShape(24.dp)
     ) {
         Box {
@@ -56,13 +61,14 @@ fun NewsCard(title: String, description: String, imageUrl: String, onClick: () -
 
 @Composable
 fun PromoBanner(title: String, subtitle: String, imageUrl: String, onClick: () -> Unit) {
-    Card(
+    ElevatedCard(
         modifier = Modifier
             .fillMaxWidth()
             .height(180.dp)
-            .clickable(onClick = onClick),
+            .clickable(onClick = onClick)
+            .animateContentSize(),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             AsyncImage(
@@ -102,7 +108,7 @@ fun PromoBanner(title: String, subtitle: String, imageUrl: String, onClick: () -
 }
 
 @Composable
-fun CategoryTile(name: String, icon: String, color: Color, onClick: () -> Unit) {
+fun CategoryTile(name: String, icon: ImageVector, color: Color, onClick: () -> Unit) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -115,7 +121,12 @@ fun CategoryTile(name: String, icon: String, color: Color, onClick: () -> Unit) 
             color = color.copy(alpha = 0.15f)
         ) {
             Box(contentAlignment = Alignment.Center) {
-                Text(icon, fontSize = 20.sp)
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = color,
+                    modifier = Modifier.size(24.dp)
+                )
             }
         }
         Spacer(Modifier.height(4.dp))
@@ -131,12 +142,13 @@ fun CategoryTile(name: String, icon: String, color: Color, onClick: () -> Unit) 
 
 @Composable
 fun FeaturedAppCard(app: App, onClick: () -> Unit) {
-    Card(
+    OutlinedCard(
         modifier = Modifier
             .width(160.dp)
-            .clickable(onClick = onClick),
+            .clickable(onClick = onClick)
+            .animateContentSize(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+        colors = CardDefaults.outlinedCardColors(containerColor = Color.Transparent)
     ) {
         Column {
             AsyncImage(
@@ -168,12 +180,15 @@ fun FeaturedAppCard(app: App, onClick: () -> Unit) {
 
 @Composable
 fun WideAppCard(app: App, onClick: () -> Unit) {
-    Card(
+    ElevatedCard(
         modifier = Modifier
             .width(260.dp)
-            .clickable(onClick = onClick),
+            .clickable(onClick = onClick)
+            .animateContentSize(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp))
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp)
+        )
     ) {
         Column {
             AsyncImage(

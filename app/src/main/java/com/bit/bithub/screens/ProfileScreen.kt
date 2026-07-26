@@ -1,5 +1,7 @@
 package com.bit.bithub.screens
 
+import android.provider.Settings
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -14,11 +16,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
-import android.provider.Settings
-import android.content.Intent
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.bit.bithub.R
 import com.bit.bithub.BuildConfig
 import com.bit.bithub.components.SettingsItem
@@ -56,10 +57,14 @@ fun ProfileScreen(
         )
     }
 
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+
     Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text(stringResource(R.string.title_account)) },
+                scrollBehavior = scrollBehavior,
                 navigationIcon = {
                     IconButton(onClick = onClose) {
                         Icon(Icons.Default.Close, contentDescription = stringResource(R.string.btn_cancel))

@@ -14,6 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
@@ -37,12 +38,15 @@ fun HomeScreen(
     val latestGames = apps.asSequence().filter { it.category == "Игры" }.toList().reversed().take(5)
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
     Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text("bit Hub", fontWeight = FontWeight.ExtraBold) },
+                scrollBehavior = scrollBehavior,
                 actions = {
                     IconButton(onClick = onSearchClick) { Icon(Icons.Default.Search, null) }
                     IconButton(onClick = onProfileClick) {

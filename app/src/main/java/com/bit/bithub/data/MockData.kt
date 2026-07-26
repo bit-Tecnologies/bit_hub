@@ -1,5 +1,10 @@
 package com.bit.bithub.data
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.filled.*
+import androidx.compose.ui.graphics.vector.ImageVector
+
 data class NewsItem(
     val title: String,
     val description: String,
@@ -22,25 +27,25 @@ object MockData {
     )
 
     /**
-     * Маппинг технических имен категорий из БД в читаемые названия и иконки.
+     * Маппинг технических имен категорий из БД в читаемые названия и иконки ImageVector.
      */
-    fun getCategoryDisplayInfo(category: String): Pair<String, String> {
+    fun getCategoryDisplayInfo(category: String): Pair<ImageVector, String> {
         return when (category.lowercase()) {
-            "health_fitness" -> "🍏" to "Здоровье"
-            "tools" -> "🛠️" to "Инструменты"
-            "communication" -> "📱" to "Связь"
-            "entertainment" -> "🚀" to "Развлечения"
-            "photography" -> "📷" to "Фото"
-            "music" -> "🎧" to "Музыка"
-            "finance" -> "💰" to "Финансы"
-            "games", "Игры" -> "🎮" to "Игры"
-            "action" -> "💥" to "Экшен"
-            "rpg" -> "🗡️" to "RPG"
-            "puzzle" -> "🧠" to "Головоломки"
-            "racing" -> "🏎️" to "Гонки"
-            "sports" -> "💪" to "Спорт"
-            "simulation" -> "💻" to "Симуляторы"
-            else -> "📦" to category.replaceFirstChar { it.uppercase() }
+            "health_fitness" -> Icons.Default.HealthAndSafety to "Здоровье"
+            "tools" -> Icons.Default.Build to "Инструменты"
+            "communication" -> Icons.AutoMirrored.Filled.Chat to "Связь"
+            "entertainment" -> Icons.Default.Movie to "Развлечения"
+            "photography" -> Icons.Default.PhotoCamera to "Фото"
+            "music" -> Icons.Default.MusicNote to "Музыка"
+            "finance" -> Icons.Default.AccountBalanceWallet to "Финансы"
+            "games", "Игры" -> Icons.Default.Games to "Игры"
+            "action" -> Icons.Default.Whatshot to "Экшен"
+            "rpg" -> Icons.Default.Shield to "RPG"
+            "puzzle" -> Icons.Default.Extension to "Головоломки"
+            "racing" -> Icons.Default.DirectionsCar to "Гонки"
+            "sports" -> Icons.Default.SportsBasketball to "Спорт"
+            "simulation" -> Icons.Default.Computer to "Симуляторы"
+            else -> Icons.Default.Inventory2 to category.replaceFirstChar { it.uppercase() }
         }
     }
 }
