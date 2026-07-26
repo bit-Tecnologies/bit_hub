@@ -54,7 +54,7 @@ fun CategoriesSection(
         )
         LazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(categories) { categoryName ->
                 val (icon, displayTitle) = MockData.getCategoryDisplayInfo(categoryName)

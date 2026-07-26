@@ -286,14 +286,52 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun uninstallApp(context: Context, packageName: String) {
+        val pkg = packageName.trim()
+        if (pkg.isEmpty()) return
+        
         try {
+            Log.d("MainViewModel", "[Uninstall] Try 1: ACTION_DELETE for: $pkg")
+            // 1. Самый надежный способ (проверено на Xiaomi пользователя)
             val intent = android.content.Intent(android.content.Intent.ACTION_DELETE).apply {
-                data = android.net.Uri.parse("package:$packageName")
-                flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+                data = android.net.Uri.fromParts("package", pkg, null)
+                if (context !is android.app.Activity) {
+                    addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
             }
             context.startActivity(intent)
+            
         } catch (e: Exception) {
-            Log.e("MainViewModel", "Failed to uninstall app: ${e.message}")
+            Log.e("MainViewModel", "[Uninstall] ACTION_DELETE failed, trying Try 2 (PackageInstaller): ${e.message}")
+            try {
+                // 2. Современный официальный API (Session-based)
+                val packageInstaller = context.packageManager.packageInstaller
+                val statusIntent = android.content.Intent(context, com.bit.bithub.util.UpdateReceiver::class.java).apply {
+                    action = "com.bit.bithub.UNINSTALL_COMPLETE"
+                }
+                val pendingIntent = android.app.PendingIntent.getBroadcast(
+                    context, 
+                    0, 
+                    statusIntent, 
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) android.app.PendingIntent.FLAG_MUTABLE else 0
+                )
+                packageInstaller.uninstall(pkg, pendingIntent.intentSender)
+                
+            } catch (e2: Exception) {
+                Log.e("MainViewModel", "[Uninstall] PackageInstaller failed, trying Try 3 (Legacy): ${e2.message}")
+                try {
+                    // 3. Старый добрый способ (крайний случай)
+                    @Suppress("DEPRECATION")
+                    val intent = android.content.Intent(android.content.Intent.ACTION_UNINSTALL_PACKAGE).apply {
+                        data = android.net.Uri.parse("package:$pkg")
+                        if (context !is android.app.Activity) {
+                            addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                    }
+                    context.startActivity(intent)
+                } catch (e3: Exception) {
+                    Log.e("MainViewModel", "[Uninstall] All uninstall methods failed: ${e3.message}")
+                }
+            }
         }
     }
 

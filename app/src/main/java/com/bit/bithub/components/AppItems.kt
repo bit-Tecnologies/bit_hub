@@ -106,19 +106,19 @@ fun CategoryTile(name: String, icon: String, color: Color, onClick: () -> Unit) 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .width(80.dp)
+            .width(64.dp)
             .clickable(onClick = onClick)
     ) {
         Surface(
-            modifier = Modifier.size(56.dp),
-            shape = RoundedCornerShape(16.dp),
+            modifier = Modifier.size(48.dp),
+            shape = RoundedCornerShape(12.dp),
             color = color.copy(alpha = 0.15f)
         ) {
             Box(contentAlignment = Alignment.Center) {
-                Text(icon, fontSize = 24.sp)
+                Text(icon, fontSize = 20.sp)
             }
         }
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(4.dp))
         Text(
             text = name,
             style = MaterialTheme.typography.labelMedium,
