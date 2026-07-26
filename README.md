@@ -12,7 +12,15 @@
 
 <p align="center">
   <a href="https://github.com/bit-Tecnologies/bit_hub/releases/latest">
-    <img src="assets/readme/github-store-badge.svg" alt="Get it on GitHub Store" height="56">
+    <img src="assets/readme/badge_github.svg" alt="Get it on GitHub" height="56">
+  </a>
+  &nbsp;&nbsp;
+  <a href="https://github.com/bit-Tecnologies/bit_hub/releases/latest">
+    <img src="https://raw.githubusercontent.com/ImranR98/Obtainium/refs/heads/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="56">
+  </a>
+  &nbsp;&nbsp;
+  <a href="https://github.com/bit-Tecnologies/bit_hub/releases/latest">
+    <img src="assets/readme/badge_github_store.svg" alt="Get it on GitHub Store" height="56">
   </a>
 </p>
 
