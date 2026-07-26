@@ -30,13 +30,13 @@
 
   <!-- Title: softened font -->
   <text x="600" y="260" text-anchor="middle" fill="#FFFFFF"
-        style="font-family: 'Poppins', 'Nunito', 'Segoe UI', Roboto, sans-serif; font-weight: 600; font-size: 64px; letter-spacing: -0.8px;">
+        style="font-family: 'Quicksand', 'Nunito', 'Comfortaa', 'Varela Round', 'Segoe UI', sans-serif; font-weight: 700; font-size: 64px; letter-spacing: -0.5px;">
     bit Hub
   </text>
 
   <!-- Subtitle: matching softer family -->
   <text x="600" y="305" text-anchor="middle" fill="#94A3B8"
-        style="font-family: 'Poppins', 'Nunito', 'Segoe UI', Roboto, sans-serif; font-weight: 500; font-size: 18px; letter-spacing: 0.6px; text-transform: none;">
+        style="font-family: 'Quicksand', 'Nunito', 'Comfortaa', 'Varela Round', 'Segoe UI', sans-serif; font-weight: 500; font-size: 18px; letter-spacing: 0.6px; text-transform: none;">
     Smart Android Distribution & App Store
   </text>
 

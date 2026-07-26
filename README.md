@@ -11,16 +11,14 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/bit-Tecnologies/bit_hub/releases/latest">
-    <img src="assets/readme/badge_github.svg" alt="Get it on GitHub" height="56">
+  <a href="https://github.com/bit-Tecnologies/bit_hub/releases">
+    <img src="https://i.ibb.co/q0mdc4Z/get-it-on-github.png" height="80" alt="Get it on GitHub" />
   </a>
-  &nbsp;&nbsp;
-  <a href="https://github.com/bit-Tecnologies/bit_hub/releases/latest">
-    <img src="https://raw.githubusercontent.com/ImranR98/Obtainium/refs/heads/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="56">
+  <a href="https://apps.obtainium.imranr.dev/redirect.html?r=obtainium://add/https://github.com/bit-Tecnologies/bit_hub/">
+    <img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" height="55" alt="Get it on Obtainium" />
   </a>
-  &nbsp;&nbsp;
-  <a href="https://github.com/bit-Tecnologies/bit_hub/releases/latest">
-    <img src="assets/readme/badge_github_store.svg" alt="Get it on GitHub Store" height="56">
+  <a href="https://github-store.org/app?repo=bit-Tecnologies/bit_hub">
+    <img src="https://raw.githubusercontent.com/kurikomi-labs/komi-store/main/media-resources/ghs_download_badge.png" height="58" alt="Get it on GitHub Store" />
   </a>
 </p>
 
