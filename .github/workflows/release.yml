@@ -88,6 +88,8 @@ jobs:
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          # Пароль ключа; если секрет не задан, используется пароль хранилища.
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD || secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
         run: |
           OUT=app/build/outputs/apk/release
@@ -108,6 +110,7 @@ jobs:
             --ks "$RUNNER_TEMP/release.jks" \
             --ks-key-alias "$ANDROID_KEY_ALIAS" \
             --ks-pass env:ANDROID_KEYSTORE_PASSWORD \
+            --key-pass env:ANDROID_KEY_PASSWORD \
             --out "$FINAL" "$RUNNER_TEMP/aligned.apk"
           "$BT/apksigner" verify --print-certs "$FINAL"
           rm -f "$RUNNER_TEMP/release.jks" "$RUNNER_TEMP/aligned.apk"
