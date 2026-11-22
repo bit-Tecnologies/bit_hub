@@ -45,13 +45,13 @@ class UpdateRepository(private val context: Context) {
             Log.d(tag, "[UpdateCheck] Started (includePreReleases: $includePreReleases)")
             
             val url = if (includePreReleases) {
-                "https://api.github.com/repos/bit-Tecnologies/bit_hub/releases"
+                "https://api.github.com/repos/bit-Tecnologies/bit_hub/releases?per_page=100"
             } else {
                 "https://api.github.com/repos/bit-Tecnologies/bit_hub/releases/latest"
             }
-            
+
             val response: HttpResponse = client.get(url)
-            
+
             if (!response.status.isSuccess()) {
                 Log.e(tag, "[UpdateCheck] HTTP Error: ${response.status}")
                 return@withContext null
@@ -59,8 +59,7 @@ class UpdateRepository(private val context: Context) {
 
             val release = if (includePreReleases) {
                 val releases = response.body<List<GitHubRelease>>()
-                // Берем самый свежий релиз (первый в списке от GitHub API)
-                releases.firstOrNull()
+                ReleaseSelector.pickLatestRelease(releases)
             } else {
                 response.body<GitHubRelease>()
             }
@@ -79,7 +78,7 @@ class UpdateRepository(private val context: Context) {
             }
 
             val remoteVersionName = parseTagName(release.tagName)
-            val remoteVersionCode = extractVersionCode(apkAsset.name)
+            val remoteVersionCode = ReleaseSelector.extractVersionCode(apkAsset.name)
 
             Log.d(tag, "[UpdateCheck] Remote: $remoteVersionName (code: $remoteVersionCode), Local: ${BuildConfig.VERSION_NAME} (code: ${BuildConfig.VERSION_CODE})")
 
@@ -105,16 +104,6 @@ class UpdateRepository(private val context: Context) {
 
     private fun parseTagName(tagName: String): String {
         return tagName.trim().removePrefix("v").trim()
-    }
-
-    private fun extractVersionCode(fileName: String): Int? {
-        return try {
-            // Формат: bithub-5-v0.0.2.3-release.apk
-            val regex = Regex("""bithub-(\d+)-v.*-release\.apk$""")
-            regex.find(fileName)?.groupValues?.get(1)?.toInt()
-        } catch (_: Exception) {
-            null
-        }
     }
 
     private fun isVersionHigher(remoteCode: Int?, remoteName: String): Boolean {
