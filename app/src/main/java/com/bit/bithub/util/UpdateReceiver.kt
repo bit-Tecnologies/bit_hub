@@ -4,6 +4,8 @@ import android.app.DownloadManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageInstaller
+import android.os.Build
 import android.util.Log
 import androidx.core.net.toUri
 import com.bit.bithub.BitHubApplication
@@ -22,7 +24,34 @@ class UpdateReceiver : BroadcastReceiver() {
                 }
             }
             "com.bit.bithub.INSTALL_COMPLETE" -> {
+                handleInstallComplete(context, intent)
+            }
+        }
+    }
+
+    private fun handleInstallComplete(context: Context, intent: Intent) {
+        val status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, Int.MIN_VALUE)
+        when (status) {
+            PackageInstaller.STATUS_PENDING_USER_ACTION -> {
+                val confirmIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    intent.getParcelableExtra(Intent.EXTRA_INTENT, Intent::class.java)
+                } else {
+                    @Suppress("DEPRECATION")
+                    intent.getParcelableExtra(Intent.EXTRA_INTENT)
+                }
+                if (confirmIntent != null) {
+                    confirmIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    context.startActivity(confirmIntent)
+                } else {
+                    Log.e("bit_hub_updater", "[Receiver] PENDING_USER_ACTION but EXTRA_INTENT is null")
+                }
+            }
+            PackageInstaller.STATUS_SUCCESS -> {
                 Log.d("bit_hub_updater", "[Receiver] Installation session finished")
+            }
+            else -> {
+                val message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
+                Log.e("bit_hub_updater", "[Receiver] Install failed, status=$status message=$message")
             }
         }
     }

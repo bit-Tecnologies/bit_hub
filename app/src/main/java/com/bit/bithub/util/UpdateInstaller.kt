@@ -30,7 +30,10 @@ object UpdateInstaller {
         try {
             val packageInstaller = context.packageManager.packageInstaller
             val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
-            
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                params.setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
+            }
+
             val packageInfo = context.packageManager.getPackageArchiveInfo(file.absolutePath, 0)
             if (packageInfo != null) {
                 params.setAppPackageName(packageInfo.packageName)
@@ -94,10 +97,13 @@ object UpdateInstaller {
         try {
             val packageInstaller = context.packageManager.packageInstaller
             val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
-            
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                params.setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
+            }
+
             val sessionId = packageInstaller.createSession(params)
             val session = packageInstaller.openSession(sessionId)
-            
+
             val out = session.openWrite("package_install_session", 0, -1)
             val `in`: InputStream? = context.contentResolver.openInputStream(uri)
             if (`in` != null) {
