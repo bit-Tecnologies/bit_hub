@@ -17,6 +17,10 @@ on:
         description: "Пометить как pre-release"
         type: boolean
         default: true
+      dry_run:
+        description: "Dry run: собрать, подписать, проверить, но релиз не создавать"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -46,6 +50,7 @@ jobs:
           echo "VERSION_CODE=$CODE" >> "$GITHUB_ENV"
 
       - name: Fail if release already exists
+        if: ${{ inputs.dry_run != true }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ inputs.tag }}
@@ -113,10 +118,34 @@ jobs:
             --key-pass env:ANDROID_KEY_PASSWORD \
             --out "$FINAL" "$RUNNER_TEMP/aligned.apk"
           "$BT/apksigner" verify --print-certs "$FINAL"
+          CERT_SHA256=$("$BT/apksigner" verify --print-certs "$FINAL" | grep -oP 'SHA-256 digest:\s*\K[0-9a-fA-F]+' | head -1)
           rm -f "$RUNNER_TEMP/release.jks" "$RUNNER_TEMP/aligned.apk"
           echo "APK_FILE=$FINAL" >> "$GITHUB_ENV"
+          echo "CERT_SHA256=$CERT_SHA256" >> "$GITHUB_ENV"
+
+      - name: Verify signing certificate fingerprint
+        env:
+          EXPECTED_CERT_SHA256: ${{ vars.EXPECTED_CERT_SHA256 }}
+        run: |
+          if [ -z "$EXPECTED_CERT_SHA256" ]; then
+            echo "::error::Переменная репозитория EXPECTED_CERT_SHA256 не задана — задайте её в Settings -> Secrets and variables -> Actions -> Variables"
+            exit 1
+          fi
+          ACTUAL=$(echo "$CERT_SHA256" | tr '[:upper:]' '[:lower:]' | tr -d ':')
+          EXPECTED=$(echo "$EXPECTED_CERT_SHA256" | tr '[:upper:]' '[:lower:]' | tr -d ':')
+          if [ "$ACTUAL" != "$EXPECTED" ]; then
+            echo "::error::Отпечаток сертификата не совпадает с EXPECTED_CERT_SHA256. Ожидался $EXPECTED, получен $ACTUAL"
+            exit 1
+          fi
+          echo "Отпечаток сертификата подтверждён: $ACTUAL"
+
+      - name: Dry run summary
+        if: ${{ inputs.dry_run == true }}
+        run: |
+          echo "Dry run: APK собран и подписан ($APK_FILE), отпечаток сертификата проверен. Релиз не создавался."
 
       - name: Create GitHub release
+        if: ${{ inputs.dry_run != true }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ inputs.tag }}
