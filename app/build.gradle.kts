@@ -10,8 +10,8 @@ plugins {
 }
 
 // Версия приложения
-val appVersionName = "0.0.2.8"
-val appVersionCode = 10
+val appVersionName = "0.0.2.9"
+val appVersionCode = 11
 
 // Чтение ключей из secrets.properties
 val secrets = Properties()
@@ -25,7 +25,7 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.bit.bithub"
+        applicationId = "dev.cybernattor.hub"
         minSdk = 23
         targetSdk = 37
         versionCode = appVersionCode

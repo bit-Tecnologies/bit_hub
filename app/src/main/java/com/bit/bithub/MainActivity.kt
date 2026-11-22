@@ -60,6 +60,18 @@ import kotlinx.coroutines.launch
 import java.io.File
 import kotlin.time.Duration.Companion.seconds
 
+private const val OLD_PACKAGE_NAME = "com.bit.bithub"
+
+private fun isOldPackageInstalled(context: Context): Boolean {
+    if (BuildConfig.APPLICATION_ID == OLD_PACKAGE_NAME) return false
+    return try {
+        context.packageManager.getPackageInfo(OLD_PACKAGE_NAME, 0)
+        true
+    } catch (_: PackageManager.NameNotFoundException) {
+        false
+    }
+}
+
 class MainActivity : ComponentActivity() {
 
     private var initialAppId by mutableStateOf<Long?>(null)
@@ -76,8 +88,20 @@ class MainActivity : ComponentActivity() {
             val windowSizeClass = calculateWindowSizeClass(this)
             val settingsRepository = remember { SettingsRepository(this) }
             val currentTheme by settingsRepository.themeMode.collectAsState(initial = ThemeMode.SYSTEM)
-            
+
             val isDarkTheme = if (currentTheme == ThemeMode.SYSTEM) isSystemInDarkTheme() else currentTheme == ThemeMode.DARK
+
+            var showOldAppHint by remember { mutableStateOf(isOldPackageInstalled(this)) }
+            if (showOldAppHint) {
+                AlertDialog(
+                    onDismissRequest = { showOldAppHint = false },
+                    title = { Text("Найдено старое приложение") },
+                    text = { Text("На устройстве установлена предыдущая версия bit Hub (com.bit.bithub). Это новое приложение устанавливается рядом с ней. Старую версию можно удалить вручную.") },
+                    confirmButton = {
+                        TextButton(onClick = { showOldAppHint = false }) { Text("Понятно") }
+                    }
+                )
+            }
 
             LaunchedEffect(isDarkTheme) {
                 val style = if (isDarkTheme) {
@@ -111,14 +135,9 @@ class MainActivity : ComponentActivity() {
             // bithub://app?id=...
             data.scheme == "bithub" && data.host == "app" -> data.getQueryParameter("id")
             
-            // https://bit-tecnologies.github.io/bit_hub/app?id=...
-            (data.scheme == "http" || data.scheme == "https") && 
-            data.host == "bit-tecnologies.github.io" && 
-            data.path?.startsWith("/bit_hub/app") == true -> data.getQueryParameter("id")
-            
-            // https://bit-tecnologies.pages.dev/app?id=...
-            (data.scheme == "http" || data.scheme == "https") && 
-            data.host == "bit-tecnologies.pages.dev" && 
+            // https://bit-tecnologies.vercel.app/app?id=...
+            (data.scheme == "http" || data.scheme == "https") &&
+            data.host == "bit-tecnologies.vercel.app" &&
             data.path?.startsWith("/app") == true -> data.getQueryParameter("id")
             
             else -> null
