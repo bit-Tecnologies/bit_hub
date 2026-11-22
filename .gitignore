@@ -1,6 +1,7 @@
 # --- СЕКРЕТЫ И КЛЮЧИ (КРИТИЧЕСКИ ВАЖНО) ---
 /local.properties
 /secrets.properties
+CLAUDE.local.md
 *.jks
 *.keystore
 *.p12
