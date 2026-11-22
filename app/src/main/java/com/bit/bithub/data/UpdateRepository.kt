@@ -45,9 +45,9 @@ class UpdateRepository(private val context: Context) {
             Log.d(tag, "[UpdateCheck] Started (includePreReleases: $includePreReleases)")
             
             val url = if (includePreReleases) {
-                "https://api.github.com/repos/cybernattor/bit_hub/releases"
+                "https://api.github.com/repos/bit-Tecnologies/bit_hub/releases"
             } else {
-                "https://api.github.com/repos/cybernattor/bit_hub/releases/latest"
+                "https://api.github.com/repos/bit-Tecnologies/bit_hub/releases/latest"
             }
             
             val response: HttpResponse = client.get(url)
